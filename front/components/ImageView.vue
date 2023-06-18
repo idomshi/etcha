@@ -43,16 +43,18 @@ onMounted(() => {
 
 const redraw = () => {
   console.log('redraw')
+  const iw = imageData.value.width
+  const ih = imageData.value.height
   if (buffcanvas.value === undefined) return
   if (viewcanvas.value === undefined) return
-  buffcanvas.value.width = imageData.value.width
-  buffcanvas.value.height = imageData.value.height
+  buffcanvas.value.width = iw
+  buffcanvas.value.height = ih
   buffctx.value?.putImageData(imageData.value, 0, 0)
 
   const cw = viewcanvas.value.clientWidth
   const ch = viewcanvas.value.clientHeight
-  const w = Math.min(cw, imageData.value.width)
-  const h = Math.min(ch, imageData.value.height)
+  const w = Math.min(cw, iw)
+  const h = Math.min(ch, ih)
   viewcanvas.value.width = cw
   viewcanvas.value.height = ch
   viewctx.value?.clearRect(0, 0, cw, ch)
