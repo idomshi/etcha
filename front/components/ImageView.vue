@@ -1,0 +1,86 @@
+<script setup lang="ts">
+const viewcanvas = ref<HTMLCanvasElement>()
+const viewctx = ref<CanvasRenderingContext2D>()
+// const buffcanvas = ref(new HTMLCanvasElement())
+const buffcanvas = ref<HTMLCanvasElement>()
+const buffctx = ref<CanvasRenderingContext2D>()
+
+const useImage = () => {
+  const width = 300
+  const height = 300
+  // やっぱりImageDataが使えないよって文句言ってるんだ！！
+  // SSRを切ればImageDataも使えそうだ！！
+  const imageData = ref(new ImageData(width, height))
+  const pixel = imageData.value.data
+  const modify = () => {
+    const b = Math.floor(Math.random() * 256)
+    for (let y = 0; y < height; y++) {
+      for (let x = 0; x < width; x++) {
+        const idx = (y * width + x) * 4
+        pixel[idx] = x * 255 / width
+        pixel[idx + 1] = y * 255 / height
+        pixel[idx + 2] = b
+        pixel[idx + 3] = 255
+      }
+    }
+    imageData.value = new ImageData(pixel, width) 
+  }
+
+  return {
+    imageData,
+    modify,
+  }
+}
+
+const { imageData, modify } = useImage()
+
+onMounted(() => {
+  if (viewcanvas.value === undefined) throw new Error('canvasを初期化できませんでした');
+  viewctx.value = viewcanvas.value.getContext('2d') || undefined
+
+  if (buffcanvas.value === undefined) throw new Error('canvas?')
+  buffcanvas.value.width = 300
+  buffcanvas.value.height = 300
+  buffctx.value = buffcanvas.value.getContext('2d') || undefined
+  if (buffctx.value !== undefined) {
+    buffctx.value.fillStyle = 'green'
+    buffctx.value.fillRect(10, 10, 150, 100)
+
+    // viewctx.value?.drawImage(buffcanvas.value, 0, 0)
+  }
+
+})
+
+const redraw = () => {
+  console.log('redraw')
+  if (buffcanvas.value === undefined) return
+  if (viewcanvas.value === undefined) return
+  buffctx.value?.putImageData(imageData.value, 0, 0)
+  viewctx.value?.clearRect(0, 0, viewcanvas.value.width, viewcanvas.value.height)
+  viewctx.value?.drawImage(buffcanvas.value, 0, 0)
+}
+
+watchEffect(redraw)
+
+// const randomBox = () => {
+//   if (buffcanvas.value === undefined) return
+//   buffctx.value?.clearRect(0, 0, buffcanvas.value.width, buffcanvas.value.height)
+//   const left = Math.floor(Math.random() * 100)
+//   const top = Math.floor(Math.random() * 100)
+//   const width = Math.floor(Math.random() * 100)
+//   const height = Math.floor(Math.random() * 100)
+//   buffctx.value?.fillRect(left, top, width, height)
+//   redraw()
+//   requestAnimationFrame(randomBox)
+// }
+
+
+</script>
+
+<template>
+  <div>
+    <button @click="modify">redraw</button>
+    <canvas ref="viewcanvas" width="300" height="300"></canvas>
+    <canvas ref="buffcanvas"></canvas>
+  </div>
+</template>
