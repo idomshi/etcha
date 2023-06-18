@@ -1,13 +1,12 @@
 <script setup lang="ts">
 const viewcanvas = ref<HTMLCanvasElement>()
 const viewctx = ref<CanvasRenderingContext2D>()
-// const buffcanvas = ref(new HTMLCanvasElement())
 const buffcanvas = ref<HTMLCanvasElement>()
 const buffctx = ref<CanvasRenderingContext2D>()
+const width = 300
+const height = 300
 
-const useImage = () => {
-  const width = 300
-  const height = 300
+const useImage = (width: number, height: number) => {
   // やっぱりImageDataが使えないよって文句言ってるんだ！！
   // SSRを切ればImageDataも使えそうだ！！
   const imageData = ref(new ImageData(width, height))
@@ -32,32 +31,32 @@ const useImage = () => {
   }
 }
 
-const { imageData, modify } = useImage()
+const { imageData, modify } = useImage(width, height)
 
 onMounted(() => {
   if (viewcanvas.value === undefined) throw new Error('canvasを初期化できませんでした');
   viewctx.value = viewcanvas.value.getContext('2d') || undefined
 
   if (buffcanvas.value === undefined) throw new Error('canvas?')
-  buffcanvas.value.width = 300
-  buffcanvas.value.height = 300
   buffctx.value = buffcanvas.value.getContext('2d') || undefined
-  if (buffctx.value !== undefined) {
-    buffctx.value.fillStyle = 'green'
-    buffctx.value.fillRect(10, 10, 150, 100)
-
-    // viewctx.value?.drawImage(buffcanvas.value, 0, 0)
-  }
-
 })
 
 const redraw = () => {
   console.log('redraw')
   if (buffcanvas.value === undefined) return
   if (viewcanvas.value === undefined) return
+  buffcanvas.value.width = imageData.value.width
+  buffcanvas.value.height = imageData.value.height
   buffctx.value?.putImageData(imageData.value, 0, 0)
-  viewctx.value?.clearRect(0, 0, viewcanvas.value.width, viewcanvas.value.height)
-  viewctx.value?.drawImage(buffcanvas.value, 0, 0)
+
+  const cw = viewcanvas.value.clientWidth
+  const ch = viewcanvas.value.clientHeight
+  const w = Math.min(cw, imageData.value.width)
+  const h = Math.min(ch, imageData.value.height)
+  viewcanvas.value.width = cw
+  viewcanvas.value.height = ch
+  viewctx.value?.clearRect(0, 0, cw, ch)
+  viewctx.value?.drawImage(buffcanvas.value, 0, 0, w, h, 0, 0, w, h)
 }
 
 watchEffect(redraw)
