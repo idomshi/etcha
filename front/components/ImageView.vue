@@ -78,9 +78,13 @@ watchEffect(redraw)
 </script>
 
 <template>
-  <div>
-    <button @click="modify">redraw</button>
-    <canvas ref="viewcanvas" width="300" height="300"></canvas>
-    <canvas ref="buffcanvas"></canvas>
+  <div class="w-full h-screen flex flex-col">
+    <div class="p-2 flex flex-row gap-2 bg-slate-200">
+      <button @click="modify" class="px-4 h-8 bg-slate-300 border-2 border-slate-400 rounded">redraw</button>
+    </div>
+    <div class="h-full bg-slate-100">
+      <canvas ref="viewcanvas" class="w-full h-full"></canvas>
+    </div>
+    <canvas ref="buffcanvas" class="hidden"></canvas>
   </div>
 </template>
