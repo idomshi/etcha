@@ -6,10 +6,9 @@ const buffctx = ref<CanvasRenderingContext2D>()
 const width = 300
 const height = 300
 
-const useImage = (width: number, height: number) => {
+const useImage = (imageData: Ref<ImageData>) => {
   // やっぱりImageDataが使えないよって文句言ってるんだ！！
   // SSRを切ればImageDataも使えそうだ！！
-  const imageData = ref(new ImageData(width, height))
   const pixel = imageData.value.data
   const modify = () => {
     const b = Math.floor(Math.random() * 256)
@@ -31,7 +30,8 @@ const useImage = (width: number, height: number) => {
   }
 }
 
-const { imageData, modify } = useImage(width, height)
+const imageData = ref(new ImageData(width, height))
+const { modify } = useImage(imageData)
 
 onMounted(() => {
   if (viewcanvas.value === undefined) throw new Error('canvasを初期化できませんでした');
