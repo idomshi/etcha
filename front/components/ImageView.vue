@@ -7,7 +7,7 @@ const width = 300
 const height = 300
 
 const imageData = ref(new ImageData(width, height))
-const { modify } = useImage(imageData)
+const { modify, stroke } = useImage(imageData)
 
 onMounted(() => {
   if (viewcanvas.value === undefined) throw new Error('canvasを初期化できませんでした');
@@ -16,6 +16,36 @@ onMounted(() => {
   if (buffcanvas.value === undefined) throw new Error('canvas?')
   buffctx.value = buffcanvas.value.getContext('2d') || undefined
 })
+
+let dragging = false
+const dragstart = (e: PointerEvent) => {
+  dragging = true
+  stroke({
+    x: e.offsetX,
+    y: e.offsetY,
+    pressure: e.pressure,
+  })
+}
+
+const dragmove = (e: PointerEvent) => {
+  if (!dragging) return
+  stroke({
+    x: e.offsetX,
+    y: e.offsetY,
+    pressure: e.pressure,
+  })
+
+}
+
+const dragend = (e: PointerEvent) => {
+  if (!dragging) return
+  stroke({
+    x: e.offsetX,
+    y: e.offsetY,
+    pressure: e.pressure,
+  })
+  dragging = false
+}
 
 const redraw = () => {
   console.log('redraw')
@@ -46,7 +76,12 @@ watchEffect(redraw)
       <button @click="modify" class="px-4 h-8 bg-slate-300 border-2 border-slate-400 rounded">redraw</button>
     </div>
     <div class="h-full bg-slate-100">
-      <canvas ref="viewcanvas" class="w-full h-full"></canvas>
+      <canvas
+        ref="viewcanvas" class="w-full h-full"
+        @pointerdown="dragstart"
+        @pointermove="dragmove"
+        @pointerup="dragend"
+      ></canvas>
     </div>
     <canvas ref="buffcanvas" class="hidden"></canvas>
   </div>
