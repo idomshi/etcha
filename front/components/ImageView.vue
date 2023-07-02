@@ -6,30 +6,6 @@ const buffctx = ref<CanvasRenderingContext2D>()
 const width = 300
 const height = 300
 
-const useImage = (imageData: Ref<ImageData>) => {
-  // やっぱりImageDataが使えないよって文句言ってるんだ！！
-  // SSRを切ればImageDataも使えそうだ！！
-  const pixel = imageData.value.data
-  const modify = () => {
-    const b = Math.floor(Math.random() * 256)
-    for (let y = 0; y < height; y++) {
-      for (let x = 0; x < width; x++) {
-        const idx = (y * width + x) * 4
-        pixel[idx] = x * 255 / width
-        pixel[idx + 1] = y * 255 / height
-        pixel[idx + 2] = b
-        pixel[idx + 3] = 255
-      }
-    }
-    imageData.value = new ImageData(pixel, width) 
-  }
-
-  return {
-    imageData,
-    modify,
-  }
-}
-
 const imageData = ref(new ImageData(width, height))
 const { modify } = useImage(imageData)
 
@@ -62,20 +38,6 @@ const redraw = () => {
 }
 
 watchEffect(redraw)
-
-// const randomBox = () => {
-//   if (buffcanvas.value === undefined) return
-//   buffctx.value?.clearRect(0, 0, buffcanvas.value.width, buffcanvas.value.height)
-//   const left = Math.floor(Math.random() * 100)
-//   const top = Math.floor(Math.random() * 100)
-//   const width = Math.floor(Math.random() * 100)
-//   const height = Math.floor(Math.random() * 100)
-//   buffctx.value?.fillRect(left, top, width, height)
-//   redraw()
-//   requestAnimationFrame(randomBox)
-// }
-
-
 </script>
 
 <template>
