@@ -27,13 +27,13 @@ export const useImage = (imageData: Ref<ImageData>) => {
   let isDrawing = false
   let previousePos: Position = { x: 0, y: 0, pressure: 0 }
 
-  const line = (pos1: Position, pos2: Position): void => {
-    function plot(x: number, y: number): void {
-      const idx = (y * width + x) * 4
-      pixel[idx] = pixel[idx + 1] = pixel[idx + 2] = 0
-      pixel[idx + 3] = 255
-    }
+  const plot = (x: number, y: number): void => {
+    const idx = (y * width + x) * 4
+    pixel[idx] = pixel[idx + 1] = pixel[idx + 2] = 0
+    pixel[idx + 3] = 255
+  }
 
+  const line = (pos1: Position, pos2: Position): void => {
     const x0 = Math.round(pos1.x)
     const y0 = Math.round(pos1.y)
     const x1 = Math.round(pos2.x)
@@ -72,9 +72,7 @@ export const useImage = (imageData: Ref<ImageData>) => {
     } else {
       isDrawing = true
       previousePos = pos
-      const idx = (Math.round(pos.y) * width + Math.round(pos.x)) * 4
-      pixel[idx] = pixel[idx + 1] = pixel[idx + 2] = 0
-      pixel[idx + 3] = 255
+      plot(Math.round(pos.x), Math.round(pos.y))
     }
     imageData.value = new ImageData(pixel, width)
   }
