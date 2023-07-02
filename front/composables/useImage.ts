@@ -28,31 +28,36 @@ export const useImage = (imageData: Ref<ImageData>) => {
   let previousePos: Position = { x: 0, y: 0, pressure: 0 }
 
   const line = (pos1: Position, pos2: Position): void => {
-    const deltax = Math.round(pos2.x - pos1.x)
-    const deltay = Math.round(pos2.y - pos1.y)
-
-    if (deltax === 0) {
-      const intx = Math.round(pos1.x)
-      for (let inty = Math.round(Math.min(pos1.y, pos2.y)); inty <= Math.round(Math.max(pos1.y, pos2.y)); ++inty) {
-        const idx = (inty * width + intx) * 4
-        pixel[idx] = pixel[idx + 1] = pixel[idx+2] = 0
-        pixel[idx + 3] = 255
-      }
-      return
+    function plot(x: number, y: number): void {
+      const idx = (y * width + x) * 4
+      pixel[idx] = pixel[idx + 1] = pixel[idx + 2] = 0
+      pixel[idx + 3] = 255
     }
 
-    let error = 0
-    const deltaerr = Math.abs(deltay / deltax)
-    let inty = Math.round(pos1.y)
-    for (let intx = Math.round(Math.min(pos1.x, pos2.x)); intx <= Math.round(Math.max(pos1.x, pos2.x)); ++intx) {
-        const idx = (inty * width + intx) * 4
-        pixel[idx] = pixel[idx + 1] = pixel[idx+2] = 0
-        pixel[idx + 3] = 255
-        error += deltaerr
-        if (error >= 0.5) {
-          inty += 1
-          error -= 1.0
-        }
+    const x0 = Math.round(pos1.x)
+    const y0 = Math.round(pos1.y)
+    const x1 = Math.round(pos2.x)
+    const y1 = Math.round(pos2.y)
+    const dx = Math.abs(x1 - x0)
+    const dy = Math.abs(y1 - y0)
+    const sx = x0 < x1 ? 1 : -1
+    const sy = y0 < y1 ? 1 : -1
+    let err = dx - dy
+
+    let x = x0
+    let y = y0
+    while (true) {
+      plot(x, y)
+      if (x === x1 && y === y1) break
+      const e2 = 2 * err
+      if (e2 > -dy) {
+        err -= dy
+        x += sx
+      }
+      if (e2 < dx) {
+        err += dx
+        y += sy
+      }
     }
   }
 
