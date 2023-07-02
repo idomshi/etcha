@@ -62,12 +62,9 @@ export const useImage = (imageData: Ref<ImageData>) => {
   }
 
   const stroke = (pos: Position): void => {
-    // console.log(pos)
-
     if (isDrawing) {
       if (pos.pressure === 0) {
         isDrawing = false
-        console.log('drawing end')
       }
       line(previousePos, pos)
       previousePos = pos
@@ -78,7 +75,6 @@ export const useImage = (imageData: Ref<ImageData>) => {
       const idx = (Math.round(pos.y) * width + Math.round(pos.x)) * 4
       pixel[idx] = pixel[idx + 1] = pixel[idx + 2] = 0
       pixel[idx + 3] = 255
-      console.log(['dot draw', pos, idx])
     }
     imageData.value = new ImageData(pixel, width)
   }
