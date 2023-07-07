@@ -11,10 +11,10 @@ const { modify, stroke } = useImage(imageData)
 
 onMounted(() => {
   if (viewcanvas.value === undefined) throw new Error('canvasを初期化できませんでした');
-  viewctx.value = viewcanvas.value.getContext('2d') || undefined
+  viewctx.value = viewcanvas.value.getContext('2d', { desynchronized: true }) || undefined
 
   if (buffcanvas.value === undefined) throw new Error('canvas?')
-  buffctx.value = buffcanvas.value.getContext('2d') || undefined
+  buffctx.value = buffcanvas.value.getContext('2d', { desynchronized: false }) || undefined
 })
 
 let dragging = false
@@ -76,12 +76,8 @@ watchEffect(redraw)
       <button @click="modify" class="px-4 h-8 bg-slate-300 border-2 border-slate-400 rounded">redraw</button>
     </div>
     <div class="h-full bg-slate-100">
-      <canvas
-        ref="viewcanvas" class="w-full h-full"
-        @pointerdown="dragstart"
-        @pointermove="dragmove"
-        @pointerup="dragend"
-      ></canvas>
+      <canvas ref="viewcanvas" class="w-full h-full" @pointerdown="dragstart" @pointermove="dragmove"
+        @pointerup="dragend"></canvas>
     </div>
     <canvas ref="buffcanvas" class="hidden"></canvas>
   </div>
