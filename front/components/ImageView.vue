@@ -43,18 +43,20 @@ onBeforeUnmount(() => {
 let dragging = false
 const dragstart = (e: PointerEvent) => {
   dragging = true
+  const [x, y] = convert(e.offsetX, e.offsetY)
   stroke({
-    x: e.offsetX - left.value,
-    y: e.offsetY - top.value,
+    x,
+    y,
     pressure: e.pressure,
   })
 }
 
 const dragmove = (e: PointerEvent) => {
   if (!dragging) return
+  const [x, y] = convert(e.offsetX, e.offsetY)
   stroke({
-    x: e.offsetX - left.value,
-    y: e.offsetY - top.value,
+    x,
+    y,
     pressure: e.pressure,
   })
 
@@ -62,12 +64,27 @@ const dragmove = (e: PointerEvent) => {
 
 const dragend = (e: PointerEvent) => {
   if (!dragging) return
+  const [x, y] = convert(e.offsetX, e.offsetY)
   stroke({
-    x: e.offsetX - left.value,
-    y: e.offsetY - top.value,
+    x,
+    y,
     pressure: e.pressure,
   })
   dragging = false
+}
+
+const convert = (x: number, y: number) => {
+  const iw = imageData.value.width
+  const ih = imageData.value.height
+  const ox = left.value + iw / 2
+  const oy = top.value + ih / 2
+  const c = Math.cos(angle.value)
+  const s = Math.sin(angle.value)
+  const dx = c * ox + s * oy - iw / 2
+  const dy = -s * ox + c * oy - ih / 2
+  const x0 = c * x + s * y - dx
+  const y0 = -s * x + c * y - dy
+  return [x0, y0]
 }
 
 const redraw = () => {
