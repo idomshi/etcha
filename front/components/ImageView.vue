@@ -19,6 +19,9 @@ const onWindowResize = () => {
   viewcanvas.value.height = ch.value
 }
 
+const left = ref(0)
+const top = ref(0)
+
 onMounted(() => {
   if (viewcanvas.value === undefined) throw new Error('canvasを初期化できませんでした');
   viewctx.value = viewcanvas.value.getContext('2d', { desynchronized: true }) || undefined
@@ -28,6 +31,8 @@ onMounted(() => {
 
   window.addEventListener('resize', onWindowResize)
   onWindowResize()
+  left.value = (cw.value - width) / 2
+  top.value = (ch.value - height)  / 2
 })
 
 onBeforeUnmount(() => {
@@ -38,8 +43,8 @@ let dragging = false
 const dragstart = (e: PointerEvent) => {
   dragging = true
   stroke({
-    x: e.offsetX,
-    y: e.offsetY,
+    x: e.offsetX - left.value,
+    y: e.offsetY - top.value,
     pressure: e.pressure,
   })
 }
@@ -47,8 +52,8 @@ const dragstart = (e: PointerEvent) => {
 const dragmove = (e: PointerEvent) => {
   if (!dragging) return
   stroke({
-    x: e.offsetX,
-    y: e.offsetY,
+    x: e.offsetX - left.value,
+    y: e.offsetY - top.value,
     pressure: e.pressure,
   })
 
@@ -57,8 +62,8 @@ const dragmove = (e: PointerEvent) => {
 const dragend = (e: PointerEvent) => {
   if (!dragging) return
   stroke({
-    x: e.offsetX,
-    y: e.offsetY,
+    x: e.offsetX - left.value,
+    y: e.offsetY - top.value,
     pressure: e.pressure,
   })
   dragging = false
@@ -79,15 +84,15 @@ const redraw = () => {
   const h = Math.min(ch.value, ih)
   viewctx.value?.clearRect(0, 0, cw.value, ch.value)
   viewctx.value.fillStyle = 'rgb(192, 192, 192)'
-  viewctx.value?.fillRect(0, 0, iw, ih)
+  viewctx.value?.fillRect(left.value, top.value, iw, ih)
   viewctx.value.fillStyle = 'rgb(255, 255, 255)'
   for (let w = 0; w < iw; w += 8) {
     for (let h = 0; h < ih; h += 8) {
       if ((w & 8) === (h & 8)) continue
-      viewctx.value.fillRect(w, h, Math.min(iw, w + 8) - w, Math.min(ih, h + 8) - h)
+      viewctx.value.fillRect(w + left.value, h + top.value, Math.min(iw, w + 8) - w, Math.min(ih, h + 8) - h)
     }
   }
-  viewctx.value?.drawImage(buffcanvas.value, 0, 0, w, h, 0, 0, w, h)
+  viewctx.value?.drawImage(buffcanvas.value, 0, 0, w, h, left.value, top.value, w, h)
 }
 
 watchEffect(redraw)
