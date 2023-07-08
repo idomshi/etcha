@@ -19,9 +19,10 @@ const onWindowResize = () => {
   viewcanvas.value.height = ch.value
 }
 
-const left = ref(0)
-const top = ref(0)
+const cx = ref(0)
+const cy = ref(0)
 const angle = ref(Math.PI / 32)
+const scale = ref(1.25)
 
 onMounted(() => {
   if (viewcanvas.value === undefined) throw new Error('canvasを初期化できませんでした');
@@ -32,8 +33,8 @@ onMounted(() => {
 
   window.addEventListener('resize', onWindowResize)
   onWindowResize()
-  left.value = (cw.value - width) / 2
-  top.value = (ch.value - height) / 2
+  cx.value = cw.value / 2
+  cy.value = ch.value / 2
 })
 
 onBeforeUnmount(() => {
@@ -74,16 +75,64 @@ const dragend = (e: PointerEvent) => {
 }
 
 const convert = (x: number, y: number) => {
+  /** transformの2*3行列と同じ形の行列を入力として、affine変換行列の掛け算を行う。 */
+  function mul(m0: number[], m1: number[]) {
+    // m0[0] = a
+    // m0[1] = b
+    // m0[2] = c
+    // m0[3] = d
+    // m0[4] = e
+    // m0[5] = f
+
+    // m1[0] = g
+    // m1[1] = h
+    // m1[2] = i
+    // m1[3] = j
+    // m1[4] = k
+    // m1[5] = l
+
+    // r[0] = a * g + c * h 
+    // r[1] = b * g + d * h
+    // r[2] = a * i + c * j 
+    // r[3] = b * i + d * j
+    // r[4] = a * k + c * l + e
+    // r[5] = b * k + d * l + f 
+    return [
+      m0[0] * m1[0] + m0[2] * m1[1],
+      m0[1] * m1[0] + m0[3] * m1[1],
+      m0[0] * m1[2] + m0[2] * m1[3],
+      m0[1] * m1[2] + m0[3] * m1[3],
+      m0[0] * m1[4] + m0[2] * m1[5] + m0[4],
+      m0[1] * m1[4] + m0[3] * m1[5] + m0[5],
+    ]
+  }
   const iw = imageData.value.width
   const ih = imageData.value.height
-  const ox = left.value + iw / 2
-  const oy = top.value + ih / 2
   const c = Math.cos(angle.value)
   const s = Math.sin(angle.value)
-  const dx = c * ox + s * oy - iw / 2
-  const dy = -s * ox + c * oy - ih / 2
-  const x0 = c * x + s * y - dx
-  const y0 = -s * x + c * y - dy
+
+  // 全てわかった。(dx, dy)の単位がスケーリングの前なのか後なのかがごっちゃになってるんだ。
+  // const d = mul(
+  //   [1 / scale.value, 0, 0, 1 / scale.value, 0, 0],
+  //   mul(
+  //     [1, 0, 0, 1, -iw * scale.value / 2, -ih * scale.value / 2],
+  //     [c, -s, s, c, 0, 0]
+  //   )
+  // )
+  // const dx = d[0] * cx.value + d[2] * cy.value + d[4]
+  // const dy = d[1] * cx.value + d[3] * cy.value + d[5]
+  // ここで求めている行列はスケーリング前の（全体座標系と同じ縮尺の）行列。
+  const dx = c * cx.value / scale.value + s * cy.value / scale.value - iw / 2
+  const dy = -s * cx.value / scale.value + c * cy.value / scale.value - ih / 2
+
+  // canvasの座標変換行列の逆行列。
+  // 2番目の行列で使ってる(dx, dy)はスケーリング後の行列。
+  // だから合成後の行列では1/sc倍している。
+  // [ c / sc s / sc -dx / sc]   [1/sc    0 0]   [1 0 -dx]   [ c s 0]
+  // [-s / sc c / sc -dy / sc] = [   0 1/sc 0] * [0 1 -dy] * [-s c 0]
+  // [      0      0        1]   [   0    0 1]   [0 0   1]   [ 0 0 1]
+  const x0 = c / scale.value * x + s / scale.value * y - dx
+  const y0 = -s / scale.value * x + c / scale.value * y - dy
   return [x0, y0]
 }
 
@@ -103,13 +152,22 @@ const redraw = () => {
   viewctx.value?.clearRect(0, 0, cw.value, ch.value)
 
   viewctx.value?.save()
-  const ox = left.value + iw / 2
-  const oy = top.value + ih / 2
   const c = Math.cos(angle.value)
   const s = Math.sin(angle.value)
-  const dx = c * ox + s * oy - iw / 2
-  const dy = -s * ox + c * oy - ih / 2
-  viewctx.value?.transform(c, s, -s, c, c * dx - s * dy, s * dx + c * dy)
+  const dx = c * cx.value + s * cy.value - iw * scale.value / 2
+  const dy = -s * cx.value + c * cy.value - ih * scale.value / 2
+
+  // マウス座標の変換行列の逆行列。
+  // [c / sc -s / sc c * dx - s * dy]   [1 0 c * dx - s * dy]   [c -s 0]   [sc  0 0]
+  // [s / sc  c / sc s * dx + c * dy] = [0 1 s * dx + c * dy] * [s  c 0] * [ 0 sc 0]
+  // [     0       0               1]   [0 0               1]   [0  0 1]   [ 0  0 1]
+  // 変換行列を全部掛け合わせてからtransformするときは、全て元座標系に対する単位で指定する。
+  viewctx.value?.transform(c * scale.value, s * scale.value, -s * scale.value, c * scale.value, c * dx - s * dy, s * dx + c * dy)
+  // 順番にtransformするときは、変換後の座標系に対して次の変形が適用される。
+  // ex.: scaleの後に（元座標系で）translate(dx, dy)したいときはtranslate(dx / sc, dy / sc)としなければならない。
+  // viewctx.value?.transform(scale.value, 0, 0, scale.value, 0, 0)
+  // viewctx.value?.transform(c, s, -s, c, 0, 0)
+  // viewctx.value?.transform(1, 0, 0, 1, dx / scale.value, dy / scale.value)
   viewctx.value.fillStyle = 'rgb(192, 192, 192)'
   viewctx.value?.fillRect(0, 0, iw, ih)
   viewctx.value.fillStyle = 'rgb(255, 255, 255)'
