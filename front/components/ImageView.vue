@@ -53,6 +53,7 @@ const redraw = () => {
   const ih = imageData.value.height
   if (buffcanvas.value === undefined) return
   if (viewcanvas.value === undefined) return
+  if (viewctx.value === undefined) return
   buffcanvas.value.width = iw
   buffcanvas.value.height = ih
   buffctx.value?.putImageData(imageData.value, 0, 0)
@@ -64,6 +65,15 @@ const redraw = () => {
   viewcanvas.value.width = cw
   viewcanvas.value.height = ch
   viewctx.value?.clearRect(0, 0, cw, ch)
+  viewctx.value.fillStyle = 'rgb(192, 192, 192)'
+  viewctx.value?.fillRect(0, 0, iw, ih)
+  viewctx.value.fillStyle = 'rgb(255, 255, 255)'
+  for (let w = 0; w < iw; w += 8) {
+    for (let h = 0; h < ih; h += 8) {
+      if ((w & 8) === (h & 8)) continue
+      viewctx.value.fillRect(w, h, Math.min(iw, w + 8) - w, Math.min(ih, h + 8) - h)
+    }
+  }
   viewctx.value?.drawImage(buffcanvas.value, 0, 0, w, h, 0, 0, w, h)
 }
 
