@@ -9,12 +9,29 @@ const height = 300
 const imageData = ref(new ImageData(width, height))
 const { modify, stroke } = useImage(imageData)
 
+const cw = ref(0)
+const ch = ref(0)
+const onWindowResize = () => {
+  if (viewcanvas.value === undefined) return
+  cw.value = viewcanvas.value.clientWidth ?? 0
+  ch.value = viewcanvas.value.clientHeight ?? 0
+  viewcanvas.value.width = cw.value
+  viewcanvas.value.height = ch.value
+}
+
 onMounted(() => {
   if (viewcanvas.value === undefined) throw new Error('canvasを初期化できませんでした');
   viewctx.value = viewcanvas.value.getContext('2d', { desynchronized: true }) || undefined
 
   if (buffcanvas.value === undefined) throw new Error('canvas?')
   buffctx.value = buffcanvas.value.getContext('2d', { desynchronized: false }) || undefined
+
+  window.addEventListener('resize', onWindowResize)
+  onWindowResize()
+})
+
+onBeforeUnmount(() => {
+  window.addEventListener('resize', onWindowResize)
 })
 
 let dragging = false
@@ -58,13 +75,9 @@ const redraw = () => {
   buffcanvas.value.height = ih
   buffctx.value?.putImageData(imageData.value, 0, 0)
 
-  const cw = viewcanvas.value.clientWidth
-  const ch = viewcanvas.value.clientHeight
-  const w = Math.min(cw, iw)
-  const h = Math.min(ch, ih)
-  viewcanvas.value.width = cw
-  viewcanvas.value.height = ch
-  viewctx.value?.clearRect(0, 0, cw, ch)
+  const w = Math.min(cw.value, iw)
+  const h = Math.min(ch.value, ih)
+  viewctx.value?.clearRect(0, 0, cw.value, ch.value)
   viewctx.value.fillStyle = 'rgb(192, 192, 192)'
   viewctx.value?.fillRect(0, 0, iw, ih)
   viewctx.value.fillStyle = 'rgb(255, 255, 255)'
