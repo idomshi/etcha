@@ -42,36 +42,63 @@ onBeforeUnmount(() => {
 })
 
 let dragging = false
+let panning = { panning: false, x: 0, y: 0 }
 const dragstart = (e: PointerEvent) => {
-  dragging = true
-  const [x, y] = convert(e.offsetX, e.offsetY)
-  stroke({
-    x,
-    y,
-    pressure: e.pressure,
-  })
+  switch (e.buttons) {
+    case 1:
+      dragging = true
+      const [x, y] = convert(e.offsetX, e.offsetY)
+      stroke({
+        x,
+        y,
+        pressure: e.pressure,
+      })
+      break
+    case 4:
+      panning = {
+        panning: true,
+        x: e.offsetX,
+        y: e.offsetY,
+      }
+      break;
+  }
 }
 
 const dragmove = (e: PointerEvent) => {
-  if (!dragging) return
-  const [x, y] = convert(e.offsetX, e.offsetY)
-  stroke({
-    x,
-    y,
-    pressure: e.pressure,
-  })
-
+  switch (e.buttons) {
+    case 1:
+      if (!dragging) return
+      const [x, y] = convert(e.offsetX, e.offsetY)
+      stroke({
+        x,
+        y,
+        pressure: e.pressure,
+      })
+      break
+    case 4:
+      if (!panning.panning) return
+      cx.value += e.offsetX - panning.x
+      cy.value += e.offsetY - panning.y
+      panning.x = e.offsetX
+      panning.y = e.offsetY
+      break
+  }
 }
 
 const dragend = (e: PointerEvent) => {
-  if (!dragging) return
-  const [x, y] = convert(e.offsetX, e.offsetY)
-  stroke({
-    x,
-    y,
-    pressure: e.pressure,
-  })
-  dragging = false
+  if (dragging) {
+    const [x, y] = convert(e.offsetX, e.offsetY)
+    stroke({
+      x,
+      y,
+      pressure: e.pressure,
+    })
+    dragging = false
+  }
+  if (panning.panning) {
+    panning.panning = false
+  }
+
 }
 
 const convert = (x: number, y: number) => {
