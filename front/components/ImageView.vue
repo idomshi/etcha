@@ -200,8 +200,8 @@ const decAngle = () => {
       <button @click="decAngle" class="px-4 h-8 bg-slate-300 border-2 border-slate-400 rounded">-</button>
     </div>
     <div class="h-full bg-slate-100">
-      <canvas ref="viewcanvas" class="w-full h-full" @pointerdown="dragstart" @pointermove="dragmove"
-        @pointerup="dragend"></canvas>
+      <canvas ref="viewcanvas" class="w-full h-full" @pointerdown.prevent="dragstart" @pointermove.prevent="dragmove"
+        @pointerup.prevent="dragend"></canvas>
     </div>
     <canvas ref="buffcanvas" class="hidden"></canvas>
   </div>
