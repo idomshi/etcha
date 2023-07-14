@@ -161,7 +161,6 @@ const convert = (x: number, y: number) => {
 }
 
 const redraw = () => {
-  console.log('redraw')
   const iw = imageData.value.width
   const ih = imageData.value.height
   if (buffcanvas.value === undefined) return
@@ -214,6 +213,14 @@ const incAngle = () => {
 const decAngle = () => {
   setAngle(posArray.value.angle - 0.05)
 }
+
+const wheel = (e: WheelEvent) => {
+  if (e.deltaY > 0) {
+    zoomOut()
+  } else {
+    zoomIn()
+  }
+}
 </script>
 
 <template>
@@ -225,7 +232,7 @@ const decAngle = () => {
     </div>
     <div class="h-full bg-slate-100">
       <canvas ref="viewcanvas" class="w-full h-full" @pointerdown.prevent="dragstart" @pointermove.prevent="dragmove"
-        @pointerup.prevent="dragend"></canvas>
+        @pointerup.prevent="dragend" @wheel.prevent="wheel"></canvas>
     </div>
     <canvas ref="buffcanvas" class="hidden"></canvas>
   </div>

@@ -36,7 +36,7 @@ export default function useViewPosition() {
   }
 
   function zoomOut() {
-    posArray.value.scale /= 0.8
+    posArray.value.scale *= 0.8
   }
 
   return {
