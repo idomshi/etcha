@@ -6,8 +6,8 @@ const viewcanvas = ref<HTMLCanvasElement>()
 const viewctx = ref<CanvasRenderingContext2D>()
 const buffcanvas = ref<HTMLCanvasElement>()
 const buffctx = ref<CanvasRenderingContext2D>()
-const width = 300
-const height = 300
+const width = 1024
+const height = 1024
 
 const imageData = ref(new ImageData(width, height))
 const { modify, stroke } = useImage(imageData)
