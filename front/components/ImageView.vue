@@ -34,6 +34,8 @@ onMounted(() => {
   window.addEventListener('resize', onWindowResize)
   onWindowResize()
   setCenter(cw.value / 2, ch.value / 2)
+
+  redraw()
 })
 
 onUnmounted(() => {
@@ -227,9 +229,9 @@ const redraw = () => {
   viewctx.value.imageSmoothingQuality
   viewctx.value?.drawImage(buffcanvas.value, 0, 0, w.value, h.value, 0, 0, w.value, h.value)
   viewctx.value?.restore()
+  
+  requestAnimationFrame(redraw)
 }
-
-watchEffect(redraw)
 
 const incAngle = () => {
   setAngle(posArray.value.angle + 0.05)
