@@ -201,6 +201,8 @@ const redraw = () => {
       viewctx.value.fillRect(w, h, Math.min(iw, w + 8) - w, Math.min(ih, h + 8) - h)
     }
   }
+  if (posArray.value.scale > 1) viewctx.value.imageSmoothingEnabled = false;
+  viewctx.value.imageSmoothingQuality
   viewctx.value?.drawImage(buffcanvas.value, 0, 0, w, h, 0, 0, w, h)
   viewctx.value?.restore()
 }
