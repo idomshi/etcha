@@ -169,8 +169,6 @@ function useConvert(posArray: Ref<ViewPosition>) {
 
 const { convert } = useConvert(posArray)
 
-const w = computed(() => Math.min(cw.value, imageData.value.width))
-const h = computed(() => Math.min(ch.value, imageData.value.height))
 const c = computed(() => Math.cos(posArray.value.angle))
 const s = computed(() => Math.sin(posArray.value.angle))
 const dx = computed(() =>
@@ -227,9 +225,9 @@ const redraw = () => {
   }
   if (posArray.value.scale > 1) viewctx.value.imageSmoothingEnabled = false;
   viewctx.value.imageSmoothingQuality
-  viewctx.value?.drawImage(buffcanvas.value, 0, 0, w.value, h.value, 0, 0, w.value, h.value)
+  viewctx.value?.drawImage(buffcanvas.value, 0, 0, iw, ih, 0, 0, iw, ih)
   viewctx.value?.restore()
-  
+
   requestAnimationFrame(redraw)
 }
 
@@ -260,8 +258,8 @@ const fps = useFps()
       <button @click="decAngle" class="px-4 h-8 bg-slate-300 border-2 border-slate-400 rounded">-</button>
     </div>
     <div class="h-full bg-slate-100">
-      <canvas ref="viewcanvas" class="w-full h-full touch-pinch-zoom" @pointerdown.prevent="dragstart" @pointermove.prevent="dragmove"
-        @pointerup.prevent="dragend" @wheel.prevent="wheel"></canvas>
+      <canvas ref="viewcanvas" class="w-full h-full touch-pinch-zoom" @pointerdown.prevent="dragstart"
+        @pointermove.prevent="dragmove" @pointerup.prevent="dragend" @wheel.prevent="wheel"></canvas>
     </div>
     <canvas ref="buffcanvas" class="hidden"></canvas>
     <div class="absolute top-16 left-4">{{ fps }} fps</div>
