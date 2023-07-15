@@ -167,6 +167,21 @@ function useConvert(posArray: Ref<ViewPosition>) {
 
 const { convert } = useConvert(posArray)
 
+const w = computed(() => Math.min(cw.value, imageData.value.width))
+const h = computed(() => Math.min(ch.value, imageData.value.height))
+const c = computed(() => Math.cos(posArray.value.angle))
+const s = computed(() => Math.sin(posArray.value.angle))
+const dx = computed(() =>
+  c.value * posArray.value.center.x
+  + s.value * posArray.value.center.y
+  - imageData.value.width * posArray.value.scale / 2
+)
+const dy = computed(() =>
+  -s.value * posArray.value.center.x
+  + c.value * posArray.value.center.y
+  - imageData.value.height * posArray.value.scale / 2
+)
+
 const redraw = () => {
   const iw = imageData.value.width
   const ih = imageData.value.height
@@ -177,22 +192,23 @@ const redraw = () => {
   buffcanvas.value.height = ih
   buffctx.value?.putImageData(imageData.value, 0, 0)
 
-  const w = Math.min(cw.value, iw)
-  const h = Math.min(ch.value, ih)
   viewctx.value?.clearRect(0, 0, cw.value, ch.value)
 
   viewctx.value?.save()
-  const c = Math.cos(posArray.value.angle)
-  const s = Math.sin(posArray.value.angle)
-  const dx = c * posArray.value.center.x + s * posArray.value.center.y - iw * posArray.value.scale / 2
-  const dy = -s * posArray.value.center.x + c * posArray.value.center.y - ih * posArray.value.scale / 2
 
   // マウス座標の変換行列の逆行列。
   // [c / sc -s / sc c * dx - s * dy]   [1 0 c * dx - s * dy]   [c -s 0]   [sc  0 0]
   // [s / sc  c / sc s * dx + c * dy] = [0 1 s * dx + c * dy] * [s  c 0] * [ 0 sc 0]
   // [     0       0               1]   [0 0               1]   [0  0 1]   [ 0  0 1]
   // 変換行列を全部掛け合わせてからtransformするときは、全て元座標系に対する単位で指定する。
-  viewctx.value?.transform(c * posArray.value.scale, s * posArray.value.scale, -s * posArray.value.scale, c * posArray.value.scale, c * dx - s * dy, s * dx + c * dy)
+  viewctx.value?.transform(
+    c.value * posArray.value.scale,
+    s.value * posArray.value.scale,
+    -s.value * posArray.value.scale,
+    c.value * posArray.value.scale,
+    c.value * dx.value - s.value * dy.value,
+    s.value * dx.value + c.value * dy.value
+  )
   // 順番にtransformするときは、変換後の座標系に対して次の変形が適用される。
   // ex.: scaleの後に（元座標系で）translate(dx, dy)したいときはtranslate(dx / sc, dy / sc)としなければならない。
   // viewctx.value?.transform(scale.value, 0, 0, scale.value, 0, 0)
@@ -209,7 +225,7 @@ const redraw = () => {
   }
   if (posArray.value.scale > 1) viewctx.value.imageSmoothingEnabled = false;
   viewctx.value.imageSmoothingQuality
-  viewctx.value?.drawImage(buffcanvas.value, 0, 0, w, h, 0, 0, w, h)
+  viewctx.value?.drawImage(buffcanvas.value, 0, 0, w.value, h.value, 0, 0, w.value, h.value)
   viewctx.value?.restore()
 }
 
