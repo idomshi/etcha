@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import useViewPosition from '~/composables/imagePos';
+import { useFps } from '@vueuse/core'
 
 const viewcanvas = ref<HTMLCanvasElement>()
 const viewctx = ref<CanvasRenderingContext2D>()
@@ -221,6 +222,8 @@ const wheel = (e: WheelEvent) => {
     zoomIn()
   }
 }
+
+const fps = useFps()
 </script>
 
 <template>
@@ -235,5 +238,6 @@ const wheel = (e: WheelEvent) => {
         @pointerup.prevent="dragend" @wheel.prevent="wheel"></canvas>
     </div>
     <canvas ref="buffcanvas" class="hidden"></canvas>
+    <div class="absolute top-16 left-4">{{ fps }} fps</div>
   </div>
 </template>
