@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import useViewPosition from '~/composables/imagePos';
+
 const viewcanvas = ref<HTMLCanvasElement>()
 const viewctx = ref<CanvasRenderingContext2D>()
 const buffcanvas = ref<HTMLCanvasElement>()
@@ -19,10 +21,7 @@ const onWindowResize = () => {
   viewcanvas.value.height = ch.value
 }
 
-const cx = ref(0)
-const cy = ref(0)
-const angle = ref(Math.PI / 32)
-const scale = ref(1.25)
+const { posArray, setCenter, setAngle, zoomIn, zoomOut } = useViewPosition()
 
 onMounted(() => {
   if (viewcanvas.value === undefined) throw new Error('canvasを初期化できませんでした');
@@ -33,8 +32,7 @@ onMounted(() => {
 
   window.addEventListener('resize', onWindowResize)
   onWindowResize()
-  cx.value = cw.value / 2
-  cy.value = ch.value / 2
+  setCenter(cw.value / 2, ch.value / 2)
 })
 
 onBeforeUnmount(() => {
@@ -77,8 +75,7 @@ const dragmove = (e: PointerEvent) => {
       break
     case 4:
       if (!panning.panning) return
-      cx.value += e.offsetX - panning.x
-      cy.value += e.offsetY - panning.y
+      setCenter(posArray.value.center.x + e.offsetX - panning.x, posArray.value.center.y + e.offsetY - panning.y)
       panning.x = e.offsetX
       panning.y = e.offsetY
       break
@@ -135,8 +132,8 @@ const convert = (x: number, y: number) => {
   }
   const iw = imageData.value.width
   const ih = imageData.value.height
-  const c = Math.cos(angle.value)
-  const s = Math.sin(angle.value)
+  const c = Math.cos(posArray.value.angle)
+  const s = Math.sin(posArray.value.angle)
 
   // 全てわかった。(dx, dy)の単位がスケーリングの前なのか後なのかがごっちゃになってるんだ。
   // const d = mul(
@@ -149,8 +146,8 @@ const convert = (x: number, y: number) => {
   // const dx = d[0] * cx.value + d[2] * cy.value + d[4]
   // const dy = d[1] * cx.value + d[3] * cy.value + d[5]
   // ここで求めている行列はスケーリング前の（全体座標系と同じ縮尺の）行列。
-  const dx = c * cx.value / scale.value + s * cy.value / scale.value - iw / 2
-  const dy = -s * cx.value / scale.value + c * cy.value / scale.value - ih / 2
+  const dx = c * posArray.value.center.x / posArray.value.scale + s * posArray.value.center.y / posArray.value.scale - iw / 2
+  const dy = -s * posArray.value.center.x / posArray.value.scale + c * posArray.value.center.y / posArray.value.scale - ih / 2
 
   // canvasの座標変換行列の逆行列。
   // 2番目の行列で使ってる(dx, dy)はスケーリング後の行列。
@@ -158,13 +155,12 @@ const convert = (x: number, y: number) => {
   // [ c / sc s / sc -dx / sc]   [1/sc    0 0]   [1 0 -dx]   [ c s 0]
   // [-s / sc c / sc -dy / sc] = [   0 1/sc 0] * [0 1 -dy] * [-s c 0]
   // [      0      0        1]   [   0    0 1]   [0 0   1]   [ 0 0 1]
-  const x0 = c / scale.value * x + s / scale.value * y - dx
-  const y0 = -s / scale.value * x + c / scale.value * y - dy
+  const x0 = c / posArray.value.scale * x + s / posArray.value.scale * y - dx
+  const y0 = -s / posArray.value.scale * x + c / posArray.value.scale * y - dy
   return [x0, y0]
 }
 
 const redraw = () => {
-  console.log('redraw')
   const iw = imageData.value.width
   const ih = imageData.value.height
   if (buffcanvas.value === undefined) return
@@ -179,17 +175,17 @@ const redraw = () => {
   viewctx.value?.clearRect(0, 0, cw.value, ch.value)
 
   viewctx.value?.save()
-  const c = Math.cos(angle.value)
-  const s = Math.sin(angle.value)
-  const dx = c * cx.value + s * cy.value - iw * scale.value / 2
-  const dy = -s * cx.value + c * cy.value - ih * scale.value / 2
+  const c = Math.cos(posArray.value.angle)
+  const s = Math.sin(posArray.value.angle)
+  const dx = c * posArray.value.center.x + s * posArray.value.center.y - iw * posArray.value.scale / 2
+  const dy = -s * posArray.value.center.x + c * posArray.value.center.y - ih * posArray.value.scale / 2
 
   // マウス座標の変換行列の逆行列。
   // [c / sc -s / sc c * dx - s * dy]   [1 0 c * dx - s * dy]   [c -s 0]   [sc  0 0]
   // [s / sc  c / sc s * dx + c * dy] = [0 1 s * dx + c * dy] * [s  c 0] * [ 0 sc 0]
   // [     0       0               1]   [0 0               1]   [0  0 1]   [ 0  0 1]
   // 変換行列を全部掛け合わせてからtransformするときは、全て元座標系に対する単位で指定する。
-  viewctx.value?.transform(c * scale.value, s * scale.value, -s * scale.value, c * scale.value, c * dx - s * dy, s * dx + c * dy)
+  viewctx.value?.transform(c * posArray.value.scale, s * posArray.value.scale, -s * posArray.value.scale, c * posArray.value.scale, c * dx - s * dy, s * dx + c * dy)
   // 順番にtransformするときは、変換後の座標系に対して次の変形が適用される。
   // ex.: scaleの後に（元座標系で）translate(dx, dy)したいときはtranslate(dx / sc, dy / sc)としなければならない。
   // viewctx.value?.transform(scale.value, 0, 0, scale.value, 0, 0)
@@ -211,11 +207,19 @@ const redraw = () => {
 watchEffect(redraw)
 
 const incAngle = () => {
-  angle.value += 0.01
+  setAngle(posArray.value.angle + 0.05)
 }
 
 const decAngle = () => {
-  angle.value -= 0.01
+  setAngle(posArray.value.angle - 0.05)
+}
+
+const wheel = (e: WheelEvent) => {
+  if (e.deltaY > 0) {
+    zoomOut()
+  } else {
+    zoomIn()
+  }
 }
 </script>
 
@@ -228,7 +232,7 @@ const decAngle = () => {
     </div>
     <div class="h-full bg-slate-100">
       <canvas ref="viewcanvas" class="w-full h-full" @pointerdown.prevent="dragstart" @pointermove.prevent="dragmove"
-        @pointerup.prevent="dragend"></canvas>
+        @pointerup.prevent="dragend" @wheel.prevent="wheel"></canvas>
     </div>
     <canvas ref="buffcanvas" class="hidden"></canvas>
   </div>
