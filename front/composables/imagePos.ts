@@ -7,7 +7,7 @@ interface Vector2 {
   y: number;
 }
 
-interface ViewPosition {
+export interface ViewPosition {
   center: Position;
   angle: Angle;
   scale: Scale;
@@ -23,12 +23,12 @@ export default function useViewPosition() {
   });
 
   function setCenter(x: number, y: number) {
-    posArray.value.center = {x, y}
+    posArray.value.center = { x, y }
   }
 
   function setAngle(angle: number) {
     const n = 2 * Math.PI
-    posArray.value.angle =  ((angle % n ) + n ) % n
+    posArray.value.angle = ((angle % n) + n) % n
   }
 
   function zoomIn() {

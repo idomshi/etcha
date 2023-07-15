@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import useViewPosition from '~/composables/imagePos';
+import useViewPosition, { ViewPosition } from '~/composables/imagePos';
+import { useFps } from '@vueuse/core'
 
 const viewcanvas = ref<HTMLCanvasElement>()
 const viewctx = ref<CanvasRenderingContext2D>()
@@ -33,9 +34,11 @@ onMounted(() => {
   window.addEventListener('resize', onWindowResize)
   onWindowResize()
   setCenter(cw.value / 2, ch.value / 2)
+
+  redraw()
 })
 
-onBeforeUnmount(() => {
+onUnmounted(() => {
   window.addEventListener('resize', onWindowResize)
 })
 
@@ -98,43 +101,7 @@ const dragend = (e: PointerEvent) => {
 
 }
 
-const convert = (x: number, y: number) => {
-  /** transformの2*3行列と同じ形の行列を入力として、affine変換行列の掛け算を行う。 */
-  function mul(m0: number[], m1: number[]) {
-    // m0[0] = a
-    // m0[1] = b
-    // m0[2] = c
-    // m0[3] = d
-    // m0[4] = e
-    // m0[5] = f
-
-    // m1[0] = g
-    // m1[1] = h
-    // m1[2] = i
-    // m1[3] = j
-    // m1[4] = k
-    // m1[5] = l
-
-    // r[0] = a * g + c * h 
-    // r[1] = b * g + d * h
-    // r[2] = a * i + c * j 
-    // r[3] = b * i + d * j
-    // r[4] = a * k + c * l + e
-    // r[5] = b * k + d * l + f 
-    return [
-      m0[0] * m1[0] + m0[2] * m1[1],
-      m0[1] * m1[0] + m0[3] * m1[1],
-      m0[0] * m1[2] + m0[2] * m1[3],
-      m0[1] * m1[2] + m0[3] * m1[3],
-      m0[0] * m1[4] + m0[2] * m1[5] + m0[4],
-      m0[1] * m1[4] + m0[3] * m1[5] + m0[5],
-    ]
-  }
-  const iw = imageData.value.width
-  const ih = imageData.value.height
-  const c = Math.cos(posArray.value.angle)
-  const s = Math.sin(posArray.value.angle)
-
+function useConvert(posArray: Ref<ViewPosition>) {
   // 全てわかった。(dx, dy)の単位がスケーリングの前なのか後なのかがごっちゃになってるんだ。
   // const d = mul(
   //   [1 / scale.value, 0, 0, 1 / scale.value, 0, 0],
@@ -146,19 +113,76 @@ const convert = (x: number, y: number) => {
   // const dx = d[0] * cx.value + d[2] * cy.value + d[4]
   // const dy = d[1] * cx.value + d[3] * cy.value + d[5]
   // ここで求めている行列はスケーリング前の（全体座標系と同じ縮尺の）行列。
-  const dx = c * posArray.value.center.x / posArray.value.scale + s * posArray.value.center.y / posArray.value.scale - iw / 2
-  const dy = -s * posArray.value.center.x / posArray.value.scale + c * posArray.value.center.y / posArray.value.scale - ih / 2
+  const c_sc = computed(() => Math.cos(posArray.value.angle) / posArray.value.scale)
+  const s_sc = computed(() => Math.sin(posArray.value.angle) / posArray.value.scale)
+  const dx = computed(() => c_sc.value * posArray.value.center.x + s_sc.value * posArray.value.center.y - imageData.value.width / 2)
+  const dy = computed(() => -s_sc.value * posArray.value.center.x + c_sc.value * posArray.value.center.y - imageData.value.height / 2)
 
-  // canvasの座標変換行列の逆行列。
-  // 2番目の行列で使ってる(dx, dy)はスケーリング後の行列。
-  // だから合成後の行列では1/sc倍している。
-  // [ c / sc s / sc -dx / sc]   [1/sc    0 0]   [1 0 -dx]   [ c s 0]
-  // [-s / sc c / sc -dy / sc] = [   0 1/sc 0] * [0 1 -dy] * [-s c 0]
-  // [      0      0        1]   [   0    0 1]   [0 0   1]   [ 0 0 1]
-  const x0 = c / posArray.value.scale * x + s / posArray.value.scale * y - dx
-  const y0 = -s / posArray.value.scale * x + c / posArray.value.scale * y - dy
-  return [x0, y0]
+  const convert = (x: number, y: number) => {
+    /** transformの2*3行列と同じ形の行列を入力として、affine変換行列の掛け算を行う。 */
+    function mul(m0: number[], m1: number[]) {
+      // m0[0] = a
+      // m0[1] = b
+      // m0[2] = c
+      // m0[3] = d
+      // m0[4] = e
+      // m0[5] = f
+
+      // m1[0] = g
+      // m1[1] = h
+      // m1[2] = i
+      // m1[3] = j
+      // m1[4] = k
+      // m1[5] = l
+
+      // r[0] = a * g + c * h 
+      // r[1] = b * g + d * h
+      // r[2] = a * i + c * j 
+      // r[3] = b * i + d * j
+      // r[4] = a * k + c * l + e
+      // r[5] = b * k + d * l + f 
+      return [
+        m0[0] * m1[0] + m0[2] * m1[1],
+        m0[1] * m1[0] + m0[3] * m1[1],
+        m0[0] * m1[2] + m0[2] * m1[3],
+        m0[1] * m1[2] + m0[3] * m1[3],
+        m0[0] * m1[4] + m0[2] * m1[5] + m0[4],
+        m0[1] * m1[4] + m0[3] * m1[5] + m0[5],
+      ]
+    }
+
+    // canvasの座標変換行列の逆行列。
+    // 2番目の行列で使ってる(dx, dy)はスケーリング後の行列。
+    // だから合成後の行列では1/sc倍している。
+    // [ c / sc s / sc -dx / sc]   [1/sc    0 0]   [1 0 -dx]   [ c s 0]
+    // [-s / sc c / sc -dy / sc] = [   0 1/sc 0] * [0 1 -dy] * [-s c 0]
+    // [      0      0        1]   [   0    0 1]   [0 0   1]   [ 0 0 1]
+    const x0 = c_sc.value * x + s_sc.value * y - dx.value
+    const y0 = -s_sc.value * x + c_sc.value * y - dy.value
+    return [x0, y0]
+  }
+
+  return {
+    convert,
+  }
 }
+
+const { convert } = useConvert(posArray)
+
+const w = computed(() => Math.min(cw.value, imageData.value.width))
+const h = computed(() => Math.min(ch.value, imageData.value.height))
+const c = computed(() => Math.cos(posArray.value.angle))
+const s = computed(() => Math.sin(posArray.value.angle))
+const dx = computed(() =>
+  c.value * posArray.value.center.x
+  + s.value * posArray.value.center.y
+  - imageData.value.width * posArray.value.scale / 2
+)
+const dy = computed(() =>
+  -s.value * posArray.value.center.x
+  + c.value * posArray.value.center.y
+  - imageData.value.height * posArray.value.scale / 2
+)
 
 const redraw = () => {
   const iw = imageData.value.width
@@ -170,22 +194,23 @@ const redraw = () => {
   buffcanvas.value.height = ih
   buffctx.value?.putImageData(imageData.value, 0, 0)
 
-  const w = Math.min(cw.value, iw)
-  const h = Math.min(ch.value, ih)
   viewctx.value?.clearRect(0, 0, cw.value, ch.value)
 
   viewctx.value?.save()
-  const c = Math.cos(posArray.value.angle)
-  const s = Math.sin(posArray.value.angle)
-  const dx = c * posArray.value.center.x + s * posArray.value.center.y - iw * posArray.value.scale / 2
-  const dy = -s * posArray.value.center.x + c * posArray.value.center.y - ih * posArray.value.scale / 2
 
   // マウス座標の変換行列の逆行列。
   // [c / sc -s / sc c * dx - s * dy]   [1 0 c * dx - s * dy]   [c -s 0]   [sc  0 0]
   // [s / sc  c / sc s * dx + c * dy] = [0 1 s * dx + c * dy] * [s  c 0] * [ 0 sc 0]
   // [     0       0               1]   [0 0               1]   [0  0 1]   [ 0  0 1]
   // 変換行列を全部掛け合わせてからtransformするときは、全て元座標系に対する単位で指定する。
-  viewctx.value?.transform(c * posArray.value.scale, s * posArray.value.scale, -s * posArray.value.scale, c * posArray.value.scale, c * dx - s * dy, s * dx + c * dy)
+  viewctx.value?.transform(
+    c.value * posArray.value.scale,
+    s.value * posArray.value.scale,
+    -s.value * posArray.value.scale,
+    c.value * posArray.value.scale,
+    c.value * dx.value - s.value * dy.value,
+    s.value * dx.value + c.value * dy.value
+  )
   // 順番にtransformするときは、変換後の座標系に対して次の変形が適用される。
   // ex.: scaleの後に（元座標系で）translate(dx, dy)したいときはtranslate(dx / sc, dy / sc)としなければならない。
   // viewctx.value?.transform(scale.value, 0, 0, scale.value, 0, 0)
@@ -200,11 +225,13 @@ const redraw = () => {
       viewctx.value.fillRect(w, h, Math.min(iw, w + 8) - w, Math.min(ih, h + 8) - h)
     }
   }
-  viewctx.value?.drawImage(buffcanvas.value, 0, 0, w, h, 0, 0, w, h)
+  if (posArray.value.scale > 1) viewctx.value.imageSmoothingEnabled = false;
+  viewctx.value.imageSmoothingQuality
+  viewctx.value?.drawImage(buffcanvas.value, 0, 0, w.value, h.value, 0, 0, w.value, h.value)
   viewctx.value?.restore()
+  
+  requestAnimationFrame(redraw)
 }
-
-watchEffect(redraw)
 
 const incAngle = () => {
   setAngle(posArray.value.angle + 0.05)
@@ -221,6 +248,8 @@ const wheel = (e: WheelEvent) => {
     zoomIn()
   }
 }
+
+const fps = useFps()
 </script>
 
 <template>
@@ -235,5 +264,6 @@ const wheel = (e: WheelEvent) => {
         @pointerup.prevent="dragend" @wheel.prevent="wheel"></canvas>
     </div>
     <canvas ref="buffcanvas" class="hidden"></canvas>
+    <div class="absolute top-16 left-4">{{ fps }} fps</div>
   </div>
 </template>
