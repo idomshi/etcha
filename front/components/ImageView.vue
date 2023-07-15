@@ -36,7 +36,7 @@ onMounted(() => {
   setCenter(cw.value / 2, ch.value / 2)
 })
 
-onBeforeUnmount(() => {
+onUnmounted(() => {
   window.addEventListener('resize', onWindowResize)
 })
 
