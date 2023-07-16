@@ -248,6 +248,15 @@ const wheel = (e: WheelEvent) => {
 }
 
 const fps = useFps()
+
+function exoprtAsPng() {
+  const dataUrl = buffcanvas.value?.toDataURL()
+  const link = document.createElement("a")
+  if (dataUrl === undefined) return
+  link.href = dataUrl
+  link.download = "image.png"
+  link.click()
+}
 </script>
 
 <template>
@@ -256,6 +265,7 @@ const fps = useFps()
       <button @click="modify" class="px-4 h-8 bg-slate-300 border-2 border-slate-400 rounded">redraw</button>
       <button @click="incAngle" class="px-4 h-8 bg-slate-300 border-2 border-slate-400 rounded">+</button>
       <button @click="decAngle" class="px-4 h-8 bg-slate-300 border-2 border-slate-400 rounded">-</button>
+      <button @click="exoprtAsPng" class="px-4 h-8 bg-slate-300 border-2 border-slate-400 rounded">PNG↓</button>
     </div>
     <div class="h-full bg-slate-100">
       <canvas ref="viewcanvas" class="w-full h-full touch-pinch-zoom" @pointerdown.prevent="dragstart"
