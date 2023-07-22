@@ -10,7 +10,7 @@ const width = 1024
 const height = 1024
 
 const imageData = ref(new ImageData(width, height))
-const { modify, stroke } = useImage(imageData)
+const { modify, stroke, undo, redo } = useImage(imageData)
 
 const cw = ref(0)
 const ch = ref(0)
@@ -266,6 +266,8 @@ function exoprtAsPng() {
       <button @click="incAngle" class="px-4 h-8 bg-slate-300 border-2 border-slate-400 rounded">+</button>
       <button @click="decAngle" class="px-4 h-8 bg-slate-300 border-2 border-slate-400 rounded">-</button>
       <button @click="exoprtAsPng" class="px-4 h-8 bg-slate-300 border-2 border-slate-400 rounded">PNG↓</button>
+      <button @click="undo" class="px-4 h-8 bg-slate-300 border-2 border-slate-400 rounded">Undo</button>
+      <button @click="redo" class="px-4 h-8 bg-slate-300 border-2 border-slate-400 rounded">Redo</button>
     </div>
     <div class="h-full bg-slate-100">
       <canvas ref="viewcanvas" class="w-full h-full touch-pinch-zoom" @pointerdown.prevent="dragstart"

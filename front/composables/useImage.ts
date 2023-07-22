@@ -1,9 +1,15 @@
+import { UndoBuffer } from "./UndoBuffer";
+
 export const useImage = (imageData: Ref<ImageData>) => {
   // やっぱりImageDataが使えないよって文句言ってるんだ！！
   // SSRを切ればImageDataも使えそうだ！！
   const pixel = imageData.value.data
   const width = imageData.value.width
   const height = imageData.value.height
+  const undoBuffer = new UndoBuffer<ImageData>(
+    new ImageData(new Uint8ClampedArray(pixel), width)
+  );
+
   const modify = () => {
     const b = Math.floor(Math.random() * 256)
     for (let y = 0; y < height; y++) {
@@ -19,8 +25,8 @@ export const useImage = (imageData: Ref<ImageData>) => {
   }
 
   interface Position {
-    x: number,
-    y: number,
+    x: number;
+    y: number;
     pressure: number
   }
 
@@ -65,10 +71,12 @@ export const useImage = (imageData: Ref<ImageData>) => {
     if (isDrawing) {
       if (pos.pressure === 0) {
         isDrawing = false
+
+        // undoバッファに突っ込む。
+        undoBuffer.push(new ImageData(new Uint8ClampedArray(pixel), width));
       }
       line(previousePos, pos)
       previousePos = pos
-
     } else {
       isDrawing = true
       previousePos = pos
@@ -77,10 +85,23 @@ export const useImage = (imageData: Ref<ImageData>) => {
     imageData.value = new ImageData(pixel, width)
   }
 
+  function undo() {
+    const image = undoBuffer.undo()
+    if (image === undefined) return
+    imageData.value.data.set(image.data)
+  }
+
+  function redo() {
+    const image = undoBuffer.redo()
+    if (image === undefined) return
+    imageData.value.data.set(image.data)
+  }
+
   return {
     imageData,
     modify,
     stroke,
+    undo,
+    redo,
   }
 }
-
