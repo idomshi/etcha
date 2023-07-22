@@ -4,8 +4,10 @@ import { useFps } from '@vueuse/core'
 
 const viewcanvas = ref<HTMLCanvasElement>()
 const viewctx = ref<CanvasRenderingContext2D>()
+const checker = ref<HTMLCanvasElement>()
 const buffcanvas = ref<HTMLCanvasElement>()
 const buffctx = ref<CanvasRenderingContext2D>()
+const checkerctx = ref<CanvasRenderingContext2D>()
 const width = 1024
 const height = 1024
 
@@ -20,6 +22,25 @@ const onWindowResize = () => {
   ch.value = viewcanvas.value.clientHeight ?? 0
   viewcanvas.value.width = cw.value
   viewcanvas.value.height = ch.value
+
+  fillByCheck()
+}
+
+const fillByCheck = () => {
+  if (checker.value === undefined) return
+  if (checkerctx.value === undefined) return
+  checker.value.width = cw.value
+  checker.value.height = ch.value
+
+  checkerctx.value.fillStyle = 'rgb(192, 192, 192)'
+  checkerctx.value.fillRect(0, 0, cw.value, ch.value)
+  checkerctx.value.fillStyle = 'rgb(255, 255, 255)'
+  for (let h = 0; h < ch.value; h += 8) {
+    for (let w = 0; w < cw.value; w += 8) {
+      if ((w & 8) === (h & 8)) continue
+      checkerctx.value.fillRect(w, h, 8, 8)
+    }
+  }
 }
 
 const { posArray, setCenter, setAngle, zoomIn, zoomOut } = useViewPosition()
@@ -30,6 +51,9 @@ onMounted(() => {
 
   if (buffcanvas.value === undefined) throw new Error('canvas?')
   buffctx.value = buffcanvas.value.getContext('2d', { desynchronized: false }) || undefined
+
+  if (checker.value === undefined) throw new Error('canvas?')
+  checkerctx.value = checker.value.getContext('2d', { desynchronized: false }) || undefined
 
   window.addEventListener('resize', onWindowResize)
   onWindowResize()
@@ -192,7 +216,8 @@ const redraw = () => {
   buffcanvas.value.height = ih
   buffctx.value?.putImageData(imageData.value, 0, 0)
 
-  viewctx.value?.clearRect(0, 0, cw.value, ch.value)
+  viewctx.value.fillStyle = 'rgb(192, 192, 192)'
+  viewctx.value.fillRect(0, 0, cw.value, ch.value)
 
   viewctx.value?.save()
 
@@ -214,15 +239,7 @@ const redraw = () => {
   // viewctx.value?.transform(scale.value, 0, 0, scale.value, 0, 0)
   // viewctx.value?.transform(c, s, -s, c, 0, 0)
   // viewctx.value?.transform(1, 0, 0, 1, dx / scale.value, dy / scale.value)
-  viewctx.value.fillStyle = 'rgb(192, 192, 192)'
-  viewctx.value?.fillRect(0, 0, iw, ih)
-  viewctx.value.fillStyle = 'rgb(255, 255, 255)'
-  for (let w = 0; w < iw; w += 8) {
-    for (let h = 0; h < ih; h += 8) {
-      if ((w & 8) === (h & 8)) continue
-      viewctx.value.fillRect(w, h, Math.min(iw, w + 8) - w, Math.min(ih, h + 8) - h)
-    }
-  }
+  viewctx.value.clearRect(0, 0, iw, ih)
   if (posArray.value.scale > 1) viewctx.value.imageSmoothingEnabled = false;
   viewctx.value.imageSmoothingQuality
   viewctx.value?.drawImage(buffcanvas.value, 0, 0, iw, ih, 0, 0, iw, ih)
@@ -269,7 +286,8 @@ function exoprtAsPng() {
       <button @click="undo" class="px-4 h-8 bg-slate-300 border-2 border-slate-400 rounded">Undo</button>
       <button @click="redo" class="px-4 h-8 bg-slate-300 border-2 border-slate-400 rounded">Redo</button>
     </div>
-    <div class="h-full bg-slate-100">
+    <div class="h-full touch-none">
+      <canvas ref="checker" class="w-full h-full absolute -z-30"></canvas>
       <canvas ref="viewcanvas" class="w-full h-full touch-pinch-zoom" @pointerdown.prevent="dragstart"
         @pointermove.prevent="dragmove" @pointerup.prevent="dragend" @wheel.prevent="wheel"></canvas>
     </div>
