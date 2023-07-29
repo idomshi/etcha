@@ -206,14 +206,18 @@ const dy = computed(() =>
   - imageData.value.height * posArray.value.scale / 2
 )
 
+watch([imageData], () => {
+  if (buffcanvas.value === undefined) return
+  buffcanvas.value.width = imageData.value.width
+  buffcanvas.value.height = imageData.value.height
+})
+
 const redraw = () => {
   const iw = imageData.value.width
   const ih = imageData.value.height
   if (buffcanvas.value === undefined) return
   if (viewcanvas.value === undefined) return
   if (viewctx.value === undefined) return
-  buffcanvas.value.width = iw
-  buffcanvas.value.height = ih
   buffctx.value?.putImageData(imageData.value, 0, 0)
 
   viewctx.value.fillStyle = 'rgb(192, 192, 192)'
