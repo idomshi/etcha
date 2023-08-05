@@ -5,10 +5,11 @@ import { useFps } from '@vueuse/core'
 const viewcanvas = ref<HTMLCanvasElement>()
 const viewctx = ref<CanvasRenderingContext2D>()
 const checker = ref<HTMLCanvasElement>()
-const buffcanvas = ref<HTMLCanvasElement>()
-const buffctx = ref<CanvasRenderingContext2D>()
+const size = { width: 1024, height: 1024 }
+const buffcanvas = ref(new OffscreenCanvas(size.width, size.height))
+const buffctx = ref<OffscreenCanvasRenderingContext2D>()
 const checkerctx = ref<CanvasRenderingContext2D>()
-const { imageData, width, height,  modify, stroke, undo, redo } = useImage(1024, 1024)
+const { imageData, width, height,  modify, stroke, undo, redo } = useImage(size.width, size.height)
 
 const cw = ref(0)
 const ch = ref(0)
@@ -268,11 +269,10 @@ const wheel = (e: WheelEvent) => {
 
 const fps = useFps()
 
-function exoprtAsPng() {
-  const dataUrl = buffcanvas.value?.toDataURL()
+async function exoprtAsPng() {
+  const blob = await buffcanvas.value?.convertToBlob()
   const link = document.createElement("a")
-  if (dataUrl === undefined) return
-  link.href = dataUrl
+  link.href = URL.createObjectURL(blob)
   link.download = "image.png"
   link.click()
 }
@@ -293,7 +293,6 @@ function exoprtAsPng() {
       <canvas ref="viewcanvas" class="w-full h-full touch-pinch-zoom" @pointerdown.prevent="dragstart"
         @pointermove.prevent="dragmove" @pointerup.prevent="dragend" @wheel.prevent="wheel"></canvas>
     </div>
-    <canvas ref="buffcanvas" class="hidden"></canvas>
     <div class="absolute top-16 left-4">{{ fps }} fps</div>
   </div>
 </template>
