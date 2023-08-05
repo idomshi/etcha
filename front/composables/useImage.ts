@@ -1,11 +1,14 @@
 import { UndoBuffer } from "./UndoBuffer";
 
-export const useImage = (imageData: Ref<ImageData>) => {
+export const useImage = (width: number, height: number) => {
   // やっぱりImageDataが使えないよって文句言ってるんだ！！
   // SSRを切ればImageDataも使えそうだ！！
-  const pixel = imageData.value.data
-  const width = imageData.value.width
-  const height = imageData.value.height
+  const w = ref(width)
+  const h = ref(height)
+  const buffcanvas = ref(new OffscreenCanvas(width, height))
+  const buffctx = ref(buffcanvas.value.getContext("2d"))
+  const pixel = new Uint8ClampedArray(width * height * 4)
+  let imageData = new ImageData(pixel, width)
   const undoBuffer = new UndoBuffer<ImageData>(
     new ImageData(new Uint8ClampedArray(pixel), width)
   );
@@ -21,7 +24,7 @@ export const useImage = (imageData: Ref<ImageData>) => {
         pixel[idx + 3] = 255
       }
     }
-    imageData.value = new ImageData(pixel, width)
+    imageData = new ImageData(pixel, width)
   }
 
   interface Position {
@@ -82,23 +85,33 @@ export const useImage = (imageData: Ref<ImageData>) => {
       previousePos = pos
       plot(Math.round(pos.x), Math.round(pos.y))
     }
-    imageData.value = new ImageData(pixel, width)
+    imageData = new ImageData(pixel, width)
   }
 
   function undo() {
     const image = undoBuffer.undo()
     if (image === undefined) return
-    imageData.value.data.set(image.data)
+    imageData.data.set(image.data)
   }
 
   function redo() {
     const image = undoBuffer.redo()
     if (image === undefined) return
-    imageData.value.data.set(image.data)
+    imageData.data.set(image.data)
   }
 
+  const redraw = () => {
+    buffctx.value?.putImageData(imageData, 0, 0)
+
+    requestAnimationFrame(redraw)
+  }
+
+  redraw()
+
   return {
-    imageData,
+    buffcanvas: readonly(buffcanvas),
+    width: readonly(w),
+    height: readonly(h),
     modify,
     stroke,
     undo,
