@@ -6,10 +6,8 @@ const viewcanvas = ref<HTMLCanvasElement>()
 const viewctx = ref<CanvasRenderingContext2D>()
 const checker = ref<HTMLCanvasElement>()
 const size = { width: 1024, height: 1024 }
-const buffcanvas = ref(new OffscreenCanvas(size.width, size.height))
-const buffctx = ref<OffscreenCanvasRenderingContext2D>()
 const checkerctx = ref<CanvasRenderingContext2D>()
-const { imageData, width, height,  modify, stroke, undo, redo } = useImage(size.width, size.height)
+const { buffcanvas, width, height,  modify, stroke, undo, redo } = useImage(size.width, size.height)
 
 const cw = ref(0)
 const ch = ref(0)
@@ -45,11 +43,6 @@ const { posArray, setCenter, setAngle, zoomIn, zoomOut } = useViewPosition()
 onMounted(() => {
   if (viewcanvas.value === undefined) throw new Error('canvasを初期化できませんでした');
   viewctx.value = viewcanvas.value.getContext('2d', { desynchronized: true }) || undefined
-
-  if (buffcanvas.value === undefined) throw new Error('canvas?')
-  buffcanvas.value.width = width.value
-  buffcanvas.value.height = height.value
-  buffctx.value = buffcanvas.value.getContext('2d', { desynchronized: false }) || undefined
 
   if (checker.value === undefined) throw new Error('canvas?')
   checkerctx.value = checker.value.getContext('2d', { desynchronized: false }) || undefined
@@ -205,19 +198,11 @@ const dy = computed(() =>
   - height.value * posArray.value.scale / 2
 )
 
-watch([width, height], () => {
-  if (buffcanvas.value === undefined) return
-  buffcanvas.value.width = width.value
-  buffcanvas.value.height = height.value
-})
-
 const redraw = () => {
   const iw = width.value
   const ih = height.value
-  if (buffcanvas.value === undefined) return
   if (viewcanvas.value === undefined) return
   if (viewctx.value === undefined) return
-  buffctx.value?.putImageData(imageData, 0, 0)
 
   viewctx.value.fillStyle = 'rgb(192, 192, 192)'
   viewctx.value.fillRect(0, 0, cw.value, ch.value)

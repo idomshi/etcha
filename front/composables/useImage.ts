@@ -5,6 +5,8 @@ export const useImage = (width: number, height: number) => {
   // SSRを切ればImageDataも使えそうだ！！
   const w = ref(width)
   const h = ref(height)
+  const buffcanvas = ref(new OffscreenCanvas(width, height))
+  const buffctx = ref(buffcanvas.value.getContext("2d"))
   const pixel = new Uint8ClampedArray(width * height * 4)
   let imageData = new ImageData(pixel, width)
   const undoBuffer = new UndoBuffer<ImageData>(
@@ -98,8 +100,16 @@ export const useImage = (width: number, height: number) => {
     imageData.data.set(image.data)
   }
 
+  const redraw = () => {
+    buffctx.value?.putImageData(imageData, 0, 0)
+
+    requestAnimationFrame(redraw)
+  }
+
+  redraw()
+
   return {
-    imageData,
+    buffcanvas: readonly(buffcanvas),
     width: readonly(w),
     height: readonly(h),
     modify,
