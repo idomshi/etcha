@@ -8,11 +8,7 @@ const checker = ref<HTMLCanvasElement>()
 const buffcanvas = ref<HTMLCanvasElement>()
 const buffctx = ref<CanvasRenderingContext2D>()
 const checkerctx = ref<CanvasRenderingContext2D>()
-const width = 1024
-const height = 1024
-
-const imageData = ref(new ImageData(width, height))
-const { modify, stroke, undo, redo } = useImage(imageData)
+const { imageData, width, height,  modify, stroke, undo, redo } = useImage(1024, 1024)
 
 const cw = ref(0)
 const ch = ref(0)
@@ -50,6 +46,8 @@ onMounted(() => {
   viewctx.value = viewcanvas.value.getContext('2d', { desynchronized: true }) || undefined
 
   if (buffcanvas.value === undefined) throw new Error('canvas?')
+  buffcanvas.value.width = width.value
+  buffcanvas.value.height = height.value
   buffctx.value = buffcanvas.value.getContext('2d', { desynchronized: false }) || undefined
 
   if (checker.value === undefined) throw new Error('canvas?')
@@ -139,8 +137,8 @@ function useConvert(posArray: Ref<ViewPosition>) {
   // ここで求めている行列はスケーリング前の（全体座標系と同じ縮尺の）行列。
   const c_sc = computed(() => Math.cos(posArray.value.angle) / posArray.value.scale)
   const s_sc = computed(() => Math.sin(posArray.value.angle) / posArray.value.scale)
-  const dx = computed(() => c_sc.value * posArray.value.center.x + s_sc.value * posArray.value.center.y - imageData.value.width / 2)
-  const dy = computed(() => -s_sc.value * posArray.value.center.x + c_sc.value * posArray.value.center.y - imageData.value.height / 2)
+  const dx = computed(() => c_sc.value * posArray.value.center.x + s_sc.value * posArray.value.center.y - width.value / 2)
+  const dy = computed(() => -s_sc.value * posArray.value.center.x + c_sc.value * posArray.value.center.y - height.value / 2)
 
   const convert = (x: number, y: number) => {
     /** transformの2*3行列と同じ形の行列を入力として、affine変換行列の掛け算を行う。 */
@@ -198,27 +196,27 @@ const s = computed(() => Math.sin(posArray.value.angle))
 const dx = computed(() =>
   c.value * posArray.value.center.x
   + s.value * posArray.value.center.y
-  - imageData.value.width * posArray.value.scale / 2
+  - width.value * posArray.value.scale / 2
 )
 const dy = computed(() =>
   -s.value * posArray.value.center.x
   + c.value * posArray.value.center.y
-  - imageData.value.height * posArray.value.scale / 2
+  - height.value * posArray.value.scale / 2
 )
 
-watch([imageData], () => {
+watch([width, height], () => {
   if (buffcanvas.value === undefined) return
-  buffcanvas.value.width = imageData.value.width
-  buffcanvas.value.height = imageData.value.height
+  buffcanvas.value.width = width.value
+  buffcanvas.value.height = height.value
 })
 
 const redraw = () => {
-  const iw = imageData.value.width
-  const ih = imageData.value.height
+  const iw = width.value
+  const ih = height.value
   if (buffcanvas.value === undefined) return
   if (viewcanvas.value === undefined) return
   if (viewctx.value === undefined) return
-  buffctx.value?.putImageData(imageData.value, 0, 0)
+  buffctx.value?.putImageData(imageData, 0, 0)
 
   viewctx.value.fillStyle = 'rgb(192, 192, 192)'
   viewctx.value.fillRect(0, 0, cw.value, ch.value)
