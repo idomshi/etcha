@@ -1,4 +1,4 @@
-import type { Position } from "./useImage";
+import type { BoundingBox, Position } from "./useImage";
 
 export class ColorImage {
   private name: string;
@@ -56,7 +56,8 @@ export class ColorImage {
     }
   }
 
-  public stroke(pos: Position): void {
+  public stroke(pos: Position): BoundingBox {
+    let result: BoundingBox = { left: 0, top: 0, width: 0, height: 0 }
     if (this.isDrawing) {
       if (pos.pressure === 0) {
         this.isDrawing = false
@@ -65,13 +66,25 @@ export class ColorImage {
         // undoBuffer.push(new ImageData(new Uint8ClampedArray(pixel), width));
       }
       this.line(this.previousePos, pos)
+      result = {
+        left: Math.floor(Math.min(pos.x, this.previousePos.x)),
+        top: Math.floor(Math.min(pos.y, this.previousePos.y)),
+        width: Math.ceil(Math.abs(this.previousePos.x - pos.x)) + 2,
+        height: Math.ceil(Math.abs(this.previousePos.y - pos.y)) + 2,
+      }
       this.previousePos = pos
     } else {
       this.isDrawing = true
+      result = {
+        left: Math.floor(pos.x),
+        top: Math.floor(pos.y),
+        width: 1,
+        height: 1,
+      }
       this.previousePos = pos
       this.plot(Math.round(pos.x), Math.round(pos.y))
     }
     this.cache.set(this.pixels)
+    return result
   }
 }
-

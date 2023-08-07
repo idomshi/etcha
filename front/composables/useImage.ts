@@ -7,6 +7,13 @@ export interface Position {
   pressure: number
 }
 
+export interface BoundingBox {
+  left: number;
+  top: number;
+  width: number;
+  height: number;
+}
+
 export const useImage = (width: number, height: number) => {
   // やっぱりImageDataが使えないよって文句言ってるんだ！！
   // SSRを切ればImageDataも使えそうだ！！

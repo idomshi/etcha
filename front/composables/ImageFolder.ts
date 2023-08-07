@@ -1,5 +1,5 @@
 import { Layer } from "./Layers";
-import type { Position } from "./useImage";
+import type { BoundingBox, Position } from "./useImage";
 
 export class ImageFolder {
   private name: string;
@@ -20,18 +20,18 @@ export class ImageFolder {
   public add(layer: Layer) {
     this.activeLayer = this.layers.length
     this.layers.push(layer)
+    this.redrawCache({ left: 0, top: 0, width: this.w, height: this.h })
   }
 
   public get image(): Uint8ClampedArray {
     return this.cache
   }
 
-  public stroke(pos: Position): void {
-    this.layers[this.activeLayer]?.stroke(pos)
+  private redrawCache(bb: BoundingBox) {
     for (const layer of this.layers) {
-      for (let r = 0; r < this.h; ++r) {
+      for (let r = bb.top; r < bb.top + bb.height; ++r) {
         const row = r * this.w
-        for (let c = 0; c < this.w; ++c) {
+        for (let c = bb.left; c < bb.left + bb.width; ++c) {
           const idx = (row + c) * 4
           const opacity = layer.image[idx + 3] / 255
           this.cache[idx] = layer.image[idx] * opacity + this.cache[idx] * (1 - opacity)
@@ -41,5 +41,12 @@ export class ImageFolder {
         }
       }
     }
+  }
+
+  public stroke(pos: Position): BoundingBox {
+    const result = this.layers[this.activeLayer]?.stroke(pos)
+      || { left: 0, top: 0, width: 0, height: 0 }
+    this.redrawCache(result)
+    return result
   }
 }
