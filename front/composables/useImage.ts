@@ -14,7 +14,11 @@ export const useImage = (width: number, height: number) => {
   const h = ref(height)
   const buffcanvas = ref(new OffscreenCanvas(width, height))
   const buffctx = ref(buffcanvas.value.getContext("2d"))
-  const layers: Layer = new ColorImage(width, height)
+  const layers: Layer = new ImageFolder(width, height)
+  const baseLayer = new ColorImage(width, height)
+  baseLayer.image.fill(255)
+  layers.add(baseLayer)
+  layers.add(new ColorImage(width, height))
   const pixel = layers.image
   let imageData = new ImageData(pixel, width)
   const undoBuffer = new UndoBuffer<ImageData>(
