@@ -44,21 +44,6 @@ export const useImage = () => {
     );
   }
 
-  const modify = () => {
-    if (w.value === undefined || h.value === undefined) return
-    const b = Math.floor(Math.random() * 256)
-    for (let y = 0; y < h.value; y++) {
-      for (let x = 0; x < w.value; x++) {
-        const idx = (y * w.value + x) * 4
-        pixel[idx] = x * 255 / w.value
-        pixel[idx + 1] = y * 255 / h.value
-        pixel[idx + 2] = b
-        pixel[idx + 3] = 255
-      }
-    }
-    imageData = new ImageData(pixel, w.value, h.value)
-  }
-
   const stroke = (pos: Position): void => {
     if (w.value === undefined || h.value === undefined) return
     layers.stroke(pos)
@@ -90,7 +75,6 @@ export const useImage = () => {
     width: readonly(w),
     height: readonly(h),
     init,
-    modify,
     stroke,
     undo,
     redo,

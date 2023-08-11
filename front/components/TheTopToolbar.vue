@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import useViewPosition from '~/composables/imagePos';
 
-const { buffcanvas, modify, undo, redo } = useImage()
+const { buffcanvas, undo, redo } = useImage()
 const { posArray, setAngle } = useViewPosition()
 const incAngle = () => {
   setAngle(posArray.value.angle + 0.05)
@@ -23,7 +23,6 @@ async function exoprtAsPng() {
 
 <template>
   <div class="p-2 flex flex-row gap-2 bg-slate-200">
-    <button @click="modify" class="px-4 h-8 bg-slate-300 border-2 border-slate-400 rounded">redraw</button>
     <button @click="incAngle" class="px-4 h-8 bg-slate-300 border-2 border-slate-400 rounded">+</button>
     <button @click="decAngle" class="px-4 h-8 bg-slate-300 border-2 border-slate-400 rounded">-</button>
     <button @click="exoprtAsPng" class="px-4 h-8 bg-slate-300 border-2 border-slate-400 rounded">PNG↓</button>
