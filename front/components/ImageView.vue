@@ -4,10 +4,8 @@ import { useFps } from '@vueuse/core'
 
 const viewcanvas = ref<HTMLCanvasElement>()
 const viewctx = ref<CanvasRenderingContext2D>()
-const checker = ref<HTMLCanvasElement>()
 const size = { width: 1024, height: 1024 }
-const checkerctx = ref<CanvasRenderingContext2D>()
-const { buffcanvas, width, height,  modify, stroke, undo, redo } = useImage(size.width, size.height)
+const { buffcanvas, width, height, modify, stroke, undo, redo } = useImage(size.width, size.height)
 
 const cw = ref(0)
 const ch = ref(0)
@@ -17,25 +15,6 @@ const onWindowResize = () => {
   ch.value = viewcanvas.value.clientHeight ?? 0
   viewcanvas.value.width = cw.value
   viewcanvas.value.height = ch.value
-
-  fillByCheck()
-}
-
-const fillByCheck = () => {
-  if (checker.value === undefined) return
-  if (checkerctx.value === undefined) return
-  checker.value.width = cw.value
-  checker.value.height = ch.value
-
-  checkerctx.value.fillStyle = 'rgb(192, 192, 192)'
-  checkerctx.value.fillRect(0, 0, cw.value, ch.value)
-  checkerctx.value.fillStyle = 'rgb(255, 255, 255)'
-  for (let h = 0; h < ch.value; h += 8) {
-    for (let w = 0; w < cw.value; w += 8) {
-      if ((w & 8) === (h & 8)) continue
-      checkerctx.value.fillRect(w, h, 8, 8)
-    }
-  }
 }
 
 const { posArray, setCenter, setAngle, zoomIn, zoomOut } = useViewPosition()
@@ -43,9 +22,6 @@ const { posArray, setCenter, setAngle, zoomIn, zoomOut } = useViewPosition()
 onMounted(() => {
   if (viewcanvas.value === undefined) throw new Error('canvasを初期化できませんでした');
   viewctx.value = viewcanvas.value.getContext('2d', { desynchronized: true }) || undefined
-
-  if (checker.value === undefined) throw new Error('canvas?')
-  checkerctx.value = checker.value.getContext('2d', { desynchronized: false }) || undefined
 
   window.addEventListener('resize', onWindowResize)
   onWindowResize()
@@ -274,10 +250,20 @@ async function exoprtAsPng() {
       <button @click="redo" class="px-4 h-8 bg-slate-300 border-2 border-slate-400 rounded">Redo</button>
     </div>
     <div class="h-full touch-none">
-      <canvas ref="checker" class="w-full h-full absolute -z-30"></canvas>
-      <canvas ref="viewcanvas" class="w-full h-full touch-pinch-zoom" @pointerdown.prevent="dragstart"
+      <canvas ref="viewcanvas" class="w-full h-full touch-pinch-zoom bg-check" @pointerdown.prevent="dragstart"
         @pointermove.prevent="dragmove" @pointerup.prevent="dragend" @wheel.prevent="wheel"></canvas>
     </div>
     <div class="absolute top-16 left-4">{{ fps }} fps</div>
   </div>
 </template>
+
+<style scoped>
+.bg-check {
+  background-image:
+    linear-gradient(45deg, #fff 25%, transparent 25%, transparent 75%, #fff 75%),
+    linear-gradient(45deg, #fff 25%, transparent 25%, transparent 75%, #fff 75%);
+  background-position: 0 0, 8px 8px;
+  background-size: 16px 16px;
+  background-color: rgb(192, 192, 192);
+}
+</style>
