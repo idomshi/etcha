@@ -5,7 +5,8 @@ import { useFps } from '@vueuse/core'
 const viewcanvas = ref<HTMLCanvasElement>()
 const viewctx = ref<CanvasRenderingContext2D>()
 const size = { width: 1024, height: 1024 }
-const { buffcanvas, width, height, modify, stroke, undo, redo } = useImage(size.width, size.height)
+const { init, buffcanvas, width, height, stroke } = useImage()
+init(size.width, size.height)
 
 const cw = ref(0)
 const ch = ref(0)
@@ -17,7 +18,7 @@ const onWindowResize = () => {
   viewcanvas.value.height = ch.value
 }
 
-const { posArray, setCenter, setAngle, zoomIn, zoomOut } = useViewPosition()
+const { posArray, setCenter, zoomIn, zoomOut } = useViewPosition()
 
 onMounted(() => {
   if (viewcanvas.value === undefined) throw new Error('canvasを初期化できませんでした');
@@ -107,8 +108,8 @@ function useConvert(posArray: Ref<ViewPosition>) {
   // ここで求めている行列はスケーリング前の（全体座標系と同じ縮尺の）行列。
   const c_sc = computed(() => Math.cos(posArray.value.angle) / posArray.value.scale)
   const s_sc = computed(() => Math.sin(posArray.value.angle) / posArray.value.scale)
-  const dx = computed(() => c_sc.value * posArray.value.center.x + s_sc.value * posArray.value.center.y - width.value / 2)
-  const dy = computed(() => -s_sc.value * posArray.value.center.x + c_sc.value * posArray.value.center.y - height.value / 2)
+  const dx = computed(() => width.value === undefined ? undefined : c_sc.value * posArray.value.center.x + s_sc.value * posArray.value.center.y - width.value / 2)
+  const dy = computed(() => height.value === undefined ? undefined : -s_sc.value * posArray.value.center.x + c_sc.value * posArray.value.center.y - height.value / 2)
 
   const convert = (x: number, y: number) => {
     /** transformの2*3行列と同じ形の行列を入力として、affine変換行列の掛け算を行う。 */
@@ -149,8 +150,9 @@ function useConvert(posArray: Ref<ViewPosition>) {
     // [ c / sc s / sc -dx / sc]   [1/sc    0 0]   [1 0 -dx]   [ c s 0]
     // [-s / sc c / sc -dy / sc] = [   0 1/sc 0] * [0 1 -dy] * [-s c 0]
     // [      0      0        1]   [   0    0 1]   [0 0   1]   [ 0 0 1]
-    const x0 = c_sc.value * x + s_sc.value * y - dx.value
-    const y0 = -s_sc.value * x + c_sc.value * y - dy.value
+    // width, heightがundefinedのとき、x0, y0を本当にundefinedにしていいのかをちゃんと検討していない。
+    const x0 = dx.value === undefined ? 0 : c_sc.value * x + s_sc.value * y - dx.value
+    const y0 = dy.value === undefined ? 0 : -s_sc.value * x + c_sc.value * y - dy.value
     return [x0, y0]
   }
 
@@ -163,20 +165,26 @@ const { convert } = useConvert(posArray)
 
 const c = computed(() => Math.cos(posArray.value.angle))
 const s = computed(() => Math.sin(posArray.value.angle))
+// width, heightがundefinedのとき、dx, dyを本当に0にしていいのかをちゃんと検討していない。
 const dx = computed(() =>
-  c.value * posArray.value.center.x
-  + s.value * posArray.value.center.y
-  - width.value * posArray.value.scale / 2
+  width.value === undefined
+    ? 0
+    : c.value * posArray.value.center.x
+    + s.value * posArray.value.center.y
+    - width.value * posArray.value.scale / 2
 )
 const dy = computed(() =>
-  -s.value * posArray.value.center.x
-  + c.value * posArray.value.center.y
-  - height.value * posArray.value.scale / 2
+  height.value === undefined
+    ? 0
+    : -s.value * posArray.value.center.x
+    + c.value * posArray.value.center.y
+    - height.value * posArray.value.scale / 2
 )
 
 const redraw = () => {
-  const iw = width.value
-  const ih = height.value
+  if (buffcanvas.value === undefined) return
+  const iw = width.value ?? 0
+  const ih = height.value ?? 0
   if (viewcanvas.value === undefined) return
   if (viewctx.value === undefined) return
 
@@ -212,14 +220,6 @@ const redraw = () => {
   requestAnimationFrame(redraw)
 }
 
-const incAngle = () => {
-  setAngle(posArray.value.angle + 0.05)
-}
-
-const decAngle = () => {
-  setAngle(posArray.value.angle - 0.05)
-}
-
 const wheel = (e: WheelEvent) => {
   if (e.deltaY > 0) {
     zoomOut()
@@ -229,26 +229,11 @@ const wheel = (e: WheelEvent) => {
 }
 
 const fps = useFps()
-
-async function exoprtAsPng() {
-  const blob = await buffcanvas.value?.convertToBlob()
-  const link = document.createElement("a")
-  link.href = URL.createObjectURL(blob)
-  link.download = "image.png"
-  link.click()
-}
 </script>
 
 <template>
   <div class="w-full h-screen flex flex-col">
-    <div class="p-2 flex flex-row gap-2 bg-slate-200">
-      <button @click="modify" class="px-4 h-8 bg-slate-300 border-2 border-slate-400 rounded">redraw</button>
-      <button @click="incAngle" class="px-4 h-8 bg-slate-300 border-2 border-slate-400 rounded">+</button>
-      <button @click="decAngle" class="px-4 h-8 bg-slate-300 border-2 border-slate-400 rounded">-</button>
-      <button @click="exoprtAsPng" class="px-4 h-8 bg-slate-300 border-2 border-slate-400 rounded">PNG↓</button>
-      <button @click="undo" class="px-4 h-8 bg-slate-300 border-2 border-slate-400 rounded">Undo</button>
-      <button @click="redo" class="px-4 h-8 bg-slate-300 border-2 border-slate-400 rounded">Redo</button>
-    </div>
+    <TheTopToolbar></TheTopToolbar>
     <div class="h-full touch-none">
       <canvas ref="viewcanvas" class="w-full h-full touch-pinch-zoom bg-check" @pointerdown.prevent="dragstart"
         @pointermove.prevent="dragmove" @pointerup.prevent="dragend" @wheel.prevent="wheel"></canvas>
