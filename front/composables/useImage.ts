@@ -18,6 +18,7 @@ let layers: Layer
 let pixel: Uint8ClampedArray
 let imageData: ImageData
 let undoBuffer: UndoBuffer<ImageData>
+let requestId = 0
 
 export const useImage = () => {
   // やっぱりImageDataが使えないよって文句言ってるんだ！！
@@ -66,10 +67,12 @@ export const useImage = () => {
   const redraw = () => {
     buffctx.value?.putImageData(imageData, 0, 0)
 
-    requestAnimationFrame(redraw)
+    requestId = requestAnimationFrame(redraw)
   }
 
-  redraw()
+  if (requestId === 0) {
+    redraw()
+  }
 
   return {
     buffcanvas: readonly(buffcanvas),

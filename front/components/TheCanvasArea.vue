@@ -88,8 +88,6 @@ const redraw = () => {
 
   requestAnimationFrame(redraw)
 }
-
-redraw()
 </script>
 
 <template>
