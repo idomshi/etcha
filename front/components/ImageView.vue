@@ -91,14 +91,3 @@ const fps = useFps()
     </div>
   </div>
 </template>
-
-<style scoped>
-.bg-check {
-  background-image:
-    linear-gradient(45deg, #fff 25%, transparent 25%, transparent 75%, #fff 75%),
-    linear-gradient(45deg, #fff 25%, transparent 25%, transparent 75%, #fff 75%);
-  background-position: 0 0, 8px 8px;
-  background-size: 16px 16px;
-  background-color: rgb(192, 192, 192);
-}
-</style>
