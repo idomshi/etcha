@@ -14,17 +14,18 @@ export interface BoundingBox {
   height: number;
 }
 
+let layers: Layer
+let pixel: Uint8ClampedArray
+let imageData: ImageData
+let undoBuffer: UndoBuffer<ImageData>
+
 export const useImage = () => {
   // やっぱりImageDataが使えないよって文句言ってるんだ！！
   // SSRを切ればImageDataも使えそうだ！！
-  const w = ref<number>()
-  const h = ref<number>()
-  const buffcanvas = ref<OffscreenCanvas>()
-  const buffctx = ref<OffscreenCanvasRenderingContext2D>()
-  let layers: Layer
-  let pixel: Uint8ClampedArray
-  let imageData: ImageData
-  let undoBuffer: UndoBuffer<ImageData>
+  const w = useState("w", () => 0)
+  const h = useState("h", () => 0)
+  const buffcanvas = useState<OffscreenCanvas | undefined>("buffcanvas")
+  const buffctx = useState<OffscreenCanvasRenderingContext2D | undefined>("buffctx")
 
   const init = (width: number, height: number) => {
     w.value = width
