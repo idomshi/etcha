@@ -2,11 +2,12 @@
 import { useFps } from '@vueuse/core'
 import useViewPosition from '~/composables/imagePos';
 
+const { posArray, setCenter, zoomIn, zoomOut } = useViewPosition()
+const { convert } = useConvert()
+
 const size = { width: 1024, height: 1024 }
 const { init, stroke } = useImage()
 init(size.width, size.height)
-
-const { posArray, setCenter, zoomIn, zoomOut } = useViewPosition()
 
 let dragging = false
 let panning = { panning: false, x: 0, y: 0 }
@@ -66,8 +67,6 @@ const dragend = (e: PointerEvent) => {
   }
 
 }
-
-const { convert } = useConvert()
 
 const wheel = (e: WheelEvent) => {
   if (e.deltaY > 0) {
