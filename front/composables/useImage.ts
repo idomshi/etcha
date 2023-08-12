@@ -14,41 +14,42 @@ export interface BoundingBox {
   height: number;
 }
 
-export const useImage = (width: number, height: number) => {
+let layers: Layer
+let pixel: Uint8ClampedArray
+let imageData: ImageData
+let undoBuffer: UndoBuffer<ImageData>
+let requestId = 0
+
+export const useImage = () => {
   // やっぱりImageDataが使えないよって文句言ってるんだ！！
   // SSRを切ればImageDataも使えそうだ！！
-  const w = ref(width)
-  const h = ref(height)
-  const buffcanvas = ref(new OffscreenCanvas(width, height))
-  const buffctx = ref(buffcanvas.value.getContext("2d"))
-  const layers: Layer = new ImageFolder(width, height)
-  const baseLayer = new ColorImage(width, height)
-  baseLayer.image.fill(255)
-  layers.add(baseLayer)
-  layers.add(new ColorImage(width, height))
-  const pixel = layers.image
-  let imageData = new ImageData(pixel, width)
-  const undoBuffer = new UndoBuffer<ImageData>(
-    new ImageData(new Uint8ClampedArray(pixel), width)
-  );
+  const w = useState("w", () => 0)
+  const h = useState("h", () => 0)
+  const buffcanvas = useState<OffscreenCanvas | undefined>("buffcanvas")
+  const buffctx = useState<OffscreenCanvasRenderingContext2D | undefined>("buffctx")
 
-  const modify = () => {
-    const b = Math.floor(Math.random() * 256)
-    for (let y = 0; y < height; y++) {
-      for (let x = 0; x < width; x++) {
-        const idx = (y * width + x) * 4
-        pixel[idx] = x * 255 / width
-        pixel[idx + 1] = y * 255 / height
-        pixel[idx + 2] = b
-        pixel[idx + 3] = 255
-      }
-    }
+  const init = (width: number, height: number) => {
+    w.value = width
+    h.value = height
+    buffcanvas.value = new OffscreenCanvas(width, height)
+    buffctx.value = buffcanvas.value.getContext("2d") ?? undefined
+    layers = new ImageFolder(width, height)
+
+    const baseLayer = new ColorImage(width, height)
+    baseLayer.image.fill(255)
+    layers.add(baseLayer)
+    layers.add(new ColorImage(width, height))
+    pixel = layers.image
     imageData = new ImageData(pixel, width)
+    undoBuffer = new UndoBuffer<ImageData>(
+      new ImageData(new Uint8ClampedArray(pixel), width)
+    );
   }
 
   const stroke = (pos: Position): void => {
+    if (w.value === undefined || h.value === undefined) return
     layers.stroke(pos)
-    imageData = new ImageData(layers.image, width)
+    imageData = new ImageData(layers.image, w.value, h.value)
   }
 
   function undo() {
@@ -66,16 +67,18 @@ export const useImage = (width: number, height: number) => {
   const redraw = () => {
     buffctx.value?.putImageData(imageData, 0, 0)
 
-    requestAnimationFrame(redraw)
+    requestId = requestAnimationFrame(redraw)
   }
 
-  redraw()
+  if (requestId === 0) {
+    redraw()
+  }
 
   return {
     buffcanvas: readonly(buffcanvas),
     width: readonly(w),
     height: readonly(h),
-    modify,
+    init,
     stroke,
     undo,
     redo,
