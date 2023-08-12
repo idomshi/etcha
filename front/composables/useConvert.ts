@@ -1,6 +1,7 @@
-import { ViewPosition } from "./imagePos"
+import useViewPosition from "./imagePos"
 
-export function useConvert(posArray: Ref<ViewPosition>) {
+export function useConvert() {
+  const { posArray } = useViewPosition()
   const { width, height } = useImage()
 
   // 全てわかった。(dx, dy)の単位がスケーリングの前なのか後なのかがごっちゃになってるんだ。
@@ -20,38 +21,6 @@ export function useConvert(posArray: Ref<ViewPosition>) {
   const dy = computed(() => height.value === undefined ? undefined : -s_sc.value * posArray.value.center.x + c_sc.value * posArray.value.center.y - height.value / 2)
 
   const convert = (x: number, y: number) => {
-    /** transformの2*3行列と同じ形の行列を入力として、affine変換行列の掛け算を行う。 */
-    function mul(m0: number[], m1: number[]) {
-      // m0[0] = a
-      // m0[1] = b
-      // m0[2] = c
-      // m0[3] = d
-      // m0[4] = e
-      // m0[5] = f
-
-      // m1[0] = g
-      // m1[1] = h
-      // m1[2] = i
-      // m1[3] = j
-      // m1[4] = k
-      // m1[5] = l
-
-      // r[0] = a * g + c * h 
-      // r[1] = b * g + d * h
-      // r[2] = a * i + c * j 
-      // r[3] = b * i + d * j
-      // r[4] = a * k + c * l + e
-      // r[5] = b * k + d * l + f 
-      return [
-        m0[0] * m1[0] + m0[2] * m1[1],
-        m0[1] * m1[0] + m0[3] * m1[1],
-        m0[0] * m1[2] + m0[2] * m1[3],
-        m0[1] * m1[2] + m0[3] * m1[3],
-        m0[0] * m1[4] + m0[2] * m1[5] + m0[4],
-        m0[1] * m1[4] + m0[3] * m1[5] + m0[5],
-      ]
-    }
-
     // canvasの座標変換行列の逆行列。
     // 2番目の行列で使ってる(dx, dy)はスケーリング後の行列。
     // だから合成後の行列では1/sc倍している。

@@ -67,7 +67,7 @@ const dragend = (e: PointerEvent) => {
 
 }
 
-const { convert } = useConvert(posArray)
+const { convert } = useConvert()
 
 const wheel = (e: WheelEvent) => {
   if (e.deltaY > 0) {
