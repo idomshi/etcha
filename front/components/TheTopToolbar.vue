@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import useViewPosition from '~/composables/imagePos';
+import init, {Layer} from '@/assets/wasm/wasm'
+init()
 
 const { buffcanvas, undo, redo } = useImage()
 const { posArray, setAngle } = useViewPosition()
@@ -19,6 +21,14 @@ async function exoprtAsPng() {
   link.download = "image.png"
   link.click()
 }
+
+let layer: Layer
+function newlayer () {
+  const width = 8
+  const height = 16
+  layer = Layer.new(width, height)
+  console.log(layer.len())
+}
 </script>
 
 <template>
@@ -28,5 +38,6 @@ async function exoprtAsPng() {
     <button @click="exoprtAsPng" class="px-4 h-8 bg-slate-300 border-2 border-slate-400 rounded">PNG↓</button>
     <button @click="undo" class="px-4 h-8 bg-slate-300 border-2 border-slate-400 rounded">Undo</button>
     <button @click="redo" class="px-4 h-8 bg-slate-300 border-2 border-slate-400 rounded">Redo</button>
+    <button @click="newlayer" class="px-4 h-8 bg-slate-300 border-2 border-slate-400 rounded">new</button>
   </div>
 </template>

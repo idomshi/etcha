@@ -23,6 +23,7 @@
 //! のようにメモリを参照する。
 //!
 
+mod layer;
 mod utils;
 
 use wasm_bindgen::prelude::*;
