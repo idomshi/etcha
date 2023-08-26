@@ -38,4 +38,10 @@ impl Layer {
             LayerType::ColorImage(v) => v.pixels.len(),
         }
     }
+
+    pub fn get_pixels(&self) -> *const u8 {
+        match &self.data {
+            LayerType::ColorImage(v) => v.pixels.as_ptr(),
+        }
+    }
 }

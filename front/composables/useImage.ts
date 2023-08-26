@@ -1,5 +1,10 @@
 import { UndoBuffer } from "./UndoBuffer";
 import type { Layer } from "./Layers";
+import init, { Layer as WasmLayer } from '@/assets/wasm/wasm'
+
+let memory: WebAssembly.Memory;
+memory = (await init()).memory
+console.log(memory)
 
 export interface Position {
   x: number;
@@ -20,6 +25,15 @@ let imageData: ImageData
 let undoBuffer: UndoBuffer<ImageData>
 let requestId = 0
 
+let layer: WasmLayer
+function newlayer() {
+  const width = 8
+  const height = 16
+  layer = WasmLayer.new(width, height)
+  const pixelsPtr = layer.get_pixels()
+  const pixels = new Uint8ClampedArray(memory.buffer, pixelsPtr, width * height * 4);
+  console.log(pixels)
+}
 export const useImage = () => {
   // やっぱりImageDataが使えないよって文句言ってるんだ！！
   // SSRを切ればImageDataも使えそうだ！！
@@ -28,7 +42,7 @@ export const useImage = () => {
   const buffcanvas = useState<OffscreenCanvas | undefined>("buffcanvas")
   const buffctx = useState<OffscreenCanvasRenderingContext2D | undefined>("buffctx")
 
-  const init = (width: number, height: number) => {
+  const initImage = (width: number, height: number) => {
     w.value = width
     h.value = height
     buffcanvas.value = new OffscreenCanvas(width, height)
@@ -53,9 +67,10 @@ export const useImage = () => {
   }
 
   function undo() {
-    const image = undoBuffer.undo()
-    if (image === undefined) return
-    imageData.data.set(image.data)
+    // const image = undoBuffer.undo()
+    // if (image === undefined) return
+    // imageData.data.set(image.data)
+    newlayer()
   }
 
   function redo() {
@@ -78,7 +93,7 @@ export const useImage = () => {
     buffcanvas: readonly(buffcanvas),
     width: readonly(w),
     height: readonly(h),
-    init,
+    init: initImage,
     stroke,
     undo,
     redo,
