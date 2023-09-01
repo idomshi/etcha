@@ -4,7 +4,7 @@ import init, { Layer as WasmLayer } from '@/assets/wasm/wasm'
 
 let memory: WebAssembly.Memory;
 memory = (await init()).memory
-console.log(memory)
+// console.log(memory)
 
 export interface Position {
   x: number;
@@ -19,21 +19,21 @@ export interface BoundingBox {
   height: number;
 }
 
-let layers: Layer
+let layers: WasmLayer
 let pixel: Uint8ClampedArray
 let imageData: ImageData
 let undoBuffer: UndoBuffer<ImageData>
 let requestId = 0
 
-let layer: WasmLayer
-function newlayer() {
-  const width = 8
-  const height = 16
-  layer = WasmLayer.new(width, height)
-  const pixelsPtr = layer.get_pixels()
-  const pixels = new Uint8ClampedArray(memory.buffer, pixelsPtr, width * height * 4);
-  console.log(pixels)
-}
+// let layer: WasmLayer
+// function newlayer() {
+//   const width = 8
+//   const height = 16
+//   layer = WasmLayer.new(width, height)
+//   const pixelsPtr = layer.get_pixels()
+//   const pixels = new Uint8ClampedArray(memory.buffer, pixelsPtr, width * height * 4);
+//   console.log(pixels)
+// }
 export const useImage = () => {
   // やっぱりImageDataが使えないよって文句言ってるんだ！！
   // SSRを切ればImageDataも使えそうだ！！
@@ -47,30 +47,37 @@ export const useImage = () => {
     h.value = height
     buffcanvas.value = new OffscreenCanvas(width, height)
     buffctx.value = buffcanvas.value.getContext("2d") ?? undefined
-    layers = new ImageFolder(width, height)
+    // layers = new ImageFolder(width, height)
+    layers = WasmLayer.new(width, height)
 
-    const baseLayer = new ColorImage(width, height)
-    baseLayer.image.fill(255)
-    layers.add(baseLayer)
-    layers.add(new ColorImage(width, height))
-    pixel = layers.image
-    imageData = new ImageData(pixel, width)
-    undoBuffer = new UndoBuffer<ImageData>(
-      new ImageData(new Uint8ClampedArray(pixel), width)
-    );
+    // const baseLayer = new ColorImage(width, height)
+    // baseLayer.image.fill(255)
+    // layers.add(baseLayer)
+    // layers.add(new ColorImage(width, height))
+    // pixel = layers.image
+    const pixelsPtr = layers.get_pixels()
+    console.log(pixelsPtr)
+    console.log(memory.buffer)
+    pixel = new Uint8ClampedArray(memory.buffer, pixelsPtr, width * height * 4);
+    console.log(pixel)
+    imageData = new ImageData(pixel, width, height)
+    // undoBuffer = new UndoBuffer<ImageData>(
+    //   new ImageData(new Uint8ClampedArray(pixel), width)
+    // );
   }
 
   const stroke = (pos: Position): void => {
     if (w.value === undefined || h.value === undefined) return
-    layers.stroke(pos)
-    imageData = new ImageData(layers.image, w.value, h.value)
+    console.log(pos)
+    layers.stroke(pos.x, pos.y, pos.pressure)
+    imageData = new ImageData(pixel, w.value, h.value)
   }
 
   function undo() {
     // const image = undoBuffer.undo()
     // if (image === undefined) return
     // imageData.data.set(image.data)
-    newlayer()
+    // newlayer()
   }
 
   function redo() {

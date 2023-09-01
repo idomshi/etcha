@@ -21,6 +21,14 @@ enum LayerType {
 }
 
 #[wasm_bindgen]
+#[derive(Debug, Clone, Copy)]
+pub struct Position {
+    pub x: f64,
+    pub y: f64,
+    pub pressure: f64,
+}
+
+#[wasm_bindgen]
 pub struct Layer {
     data: LayerType,
 }
@@ -43,5 +51,12 @@ impl Layer {
         match &self.data {
             LayerType::ColorImage(v) => v.pixels.as_ptr(),
         }
+    }
+
+    pub fn stroke(&mut self, x: f64, y: f64, pressure: f64) {
+        println!("{}, {}, {}", x, y, pressure);
+        match &mut self.data {
+            LayerType::ColorImage(v) => v.stroke(x, y, pressure)
+        };
     }
 }

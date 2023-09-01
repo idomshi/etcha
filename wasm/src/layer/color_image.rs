@@ -1,20 +1,13 @@
 use super::{BoundingBox, ImageLayer};
 use std::convert::TryInto;
 
-#[derive(Debug, Clone, Copy)]
-struct Position {
-    x: f64,
-    y: f64,
-    pressure: f64,
-}
-
 #[derive(Debug)]
 pub struct ColorImage {
     pub pixels: Vec<u8>,
     width: u16,
     height: u16,
-    isDrawing: bool,
-    previousePos: Position,
+    is_drawing: bool,
+    previouse_pos: super::Position,
 }
 
 impl ImageLayer for ColorImage {
@@ -24,8 +17,8 @@ impl ImageLayer for ColorImage {
             pixels: vec![0; length],
             width: width,
             height: height,
-            isDrawing: false,
-            previousePos: Position {
+            is_drawing: false,
+            previouse_pos: super::Position {
                 x: 0.0,
                 y: 0.0,
                 pressure: 0.0,
@@ -40,40 +33,40 @@ impl ImageLayer for ColorImage {
             width: 0,
             height: 0,
         };
-        if self.isDrawing {
+        if self.is_drawing {
             if pressure == 0.0 {
-                self.isDrawing = false;
+                self.is_drawing = false;
 
                 // undoバッファに突っ込む。
             };
             self.line(
-                &self.previousePos.clone(),
-                &Position {
+                &self.previouse_pos.clone(),
+                &super::Position {
                     x: x,
                     y: y,
                     pressure: pressure,
                 },
             );
             result = BoundingBox {
-                left: x.min(self.previousePos.x).floor() as u32,
-                top: y.min(self.previousePos.y).floor() as u32,
-                width: (self.previousePos.x - x).abs().ceil() as u32,
-                height: (self.previousePos.y - y).abs().ceil() as u32,
+                left: x.min(self.previouse_pos.x).floor() as u32,
+                top: y.min(self.previouse_pos.y).floor() as u32,
+                width: (self.previouse_pos.x - x).abs().ceil() as u32,
+                height: (self.previouse_pos.y - y).abs().ceil() as u32,
             };
-            self.previousePos = Position {
+            self.previouse_pos = super::Position {
                 x: x,
                 y: y,
                 pressure: pressure,
             };
         } else {
-            self.isDrawing = true;
+            self.is_drawing = true;
             result = BoundingBox {
                 left: x.floor() as u32,
                 top: y.floor() as u32,
                 width: 1,
                 height: 1,
             };
-            self.previousePos = Position {
+            self.previouse_pos = super::Position {
                 x: x,
                 y: y,
                 pressure: pressure,
@@ -87,7 +80,7 @@ impl ImageLayer for ColorImage {
 
 impl ColorImage {
     /// p1からp2まで直線を描画する。
-    fn line(&mut self, p1: &Position, p2: &Position) {
+    fn line(&mut self, p1: &super::Position, p2: &super::Position) {
         let x0 = p1.x.round() as i32;
         let y0 = p1.y.round() as i32;
         let x1 = p2.x.round() as i32;
