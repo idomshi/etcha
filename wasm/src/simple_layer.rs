@@ -17,7 +17,7 @@ impl SimpleLayer {
         }
     }
 
-    pub fn redraw(&mut self) {
+    pub async fn redraw(&mut self) {
         for row in 0..self.height as u32 {
             for col in 0..self.width as u32 {
                 let idx = ((row * self.width as u32 + col) * 4) as usize;

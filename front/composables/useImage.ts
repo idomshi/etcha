@@ -72,12 +72,12 @@ export const useImage = () => {
     // layers.stroke(pos.x, pos.y, pos.pressure)
   }
 
-  function undo() {
+  async function undo() {
     // const image = undoBuffer.undo()
     // if (image === undefined) return
     // imageData.data.set(image.data)
     // newlayer()
-    layers.redraw()
+    await layers.redraw()
   }
 
   function redo() {
@@ -94,7 +94,8 @@ export const useImage = () => {
     // // console.log(memory.buffer)
     // pixel = new Uint8ClampedArray(memory.buffer, pixelsPtr, w.value * h.value * 4);
     // // console.log(pixel.slice(0, 32))
-    imageData = new ImageData(pixel, w.value, h.value)
+
+    // imageData = new ImageData(pixel, w.value, h.value)
     buffctx.value?.putImageData(imageData, 0, 0)
 
     requestId = requestAnimationFrame(redraw)
