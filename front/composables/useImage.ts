@@ -1,6 +1,6 @@
 import { UndoBuffer } from "./UndoBuffer";
 import type { Layer } from "./Layers";
-import init, { Layer as WasmLayer } from '@/assets/wasm/wasm'
+import init, { SimpleLayer as WasmLayer } from '@/assets/wasm/wasm'
 
 let memory: WebAssembly.Memory;
 memory = (await init()).memory
@@ -55,7 +55,7 @@ export const useImage = () => {
     // layers.add(baseLayer)
     // layers.add(new ColorImage(width, height))
     // pixel = layers.image
-    const pixelsPtr = layers.get_pixels()
+    const pixelsPtr = layers.pixels()
     console.log(pixelsPtr)
     console.log(memory.buffer)
     pixel = new Uint8ClampedArray(memory.buffer, pixelsPtr, width * height * 4);
@@ -68,9 +68,8 @@ export const useImage = () => {
 
   const stroke = (pos: Position): void => {
     if (w.value === undefined || h.value === undefined) return
-    console.log(pos)
-    layers.stroke(pos.x, pos.y, pos.pressure)
-    imageData = new ImageData(pixel, w.value, h.value)
+    // console.log(pos)
+    // layers.stroke(pos.x, pos.y, pos.pressure)
   }
 
   function undo() {
@@ -78,6 +77,7 @@ export const useImage = () => {
     // if (image === undefined) return
     // imageData.data.set(image.data)
     // newlayer()
+    layers.redraw()
   }
 
   function redo() {
@@ -87,6 +87,14 @@ export const useImage = () => {
   }
 
   const redraw = () => {
+    if (layers === undefined) return
+    if (pixel === undefined) return
+    // const pixelsPtr = layers.pixels()
+    // // console.log(pixelsPtr)
+    // // console.log(memory.buffer)
+    // pixel = new Uint8ClampedArray(memory.buffer, pixelsPtr, w.value * h.value * 4);
+    // // console.log(pixel.slice(0, 32))
+    imageData = new ImageData(pixel, w.value, h.value)
     buffctx.value?.putImageData(imageData, 0, 0)
 
     requestId = requestAnimationFrame(redraw)

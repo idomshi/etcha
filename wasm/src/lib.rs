@@ -24,6 +24,7 @@
 //!
 
 mod layer;
+mod simple_layer;
 mod utils;
 
 use wasm_bindgen::prelude::*;
