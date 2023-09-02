@@ -69,7 +69,7 @@ export const useImage = () => {
   const stroke = (pos: Position): void => {
     if (w.value === undefined || h.value === undefined) return
     // console.log(pos)
-    // layers.stroke(pos.x, pos.y, pos.pressure)
+    layers.stroke(pos.x, pos.y, pos.pressure)
   }
 
   async function undo() {
