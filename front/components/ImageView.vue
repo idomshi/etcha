@@ -5,7 +5,7 @@ import useViewPosition from '~/composables/imagePos';
 const { posArray, setCenter, zoomIn, zoomOut } = useViewPosition()
 const { convert } = useConvert()
 
-const size = { width: 1024, height: 1024 }
+const size = { width: 256, height: 256 }
 const { init, stroke } = useImage()
 init(size.width, size.height)
 
