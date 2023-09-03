@@ -1,10 +1,8 @@
 import { UndoBuffer } from "./UndoBuffer";
-import type { Layer } from "./Layers";
 import init, { Layer as WasmLayer } from '@/assets/wasm/wasm'
 
 let memory: WebAssembly.Memory;
 memory = (await init()).memory
-// console.log(memory)
 
 export interface Position {
   x: number;
@@ -25,15 +23,6 @@ let imageData: ImageData
 let undoBuffer: UndoBuffer<ImageData>
 let requestId = 0
 
-// let layer: WasmLayer
-// function newlayer() {
-//   const width = 8
-//   const height = 16
-//   layer = WasmLayer.new(width, height)
-//   const pixelsPtr = layer.get_pixels()
-//   const pixels = new Uint8ClampedArray(memory.buffer, pixelsPtr, width * height * 4);
-//   console.log(pixels)
-// }
 export const useImage = () => {
   // やっぱりImageDataが使えないよって文句言ってるんだ！！
   // SSRを切ればImageDataも使えそうだ！！
@@ -47,14 +36,8 @@ export const useImage = () => {
     h.value = height
     buffcanvas.value = new OffscreenCanvas(width, height)
     buffctx.value = buffcanvas.value.getContext("2d") ?? undefined
-    // layers = new ImageFolder(width, height)
     layers = WasmLayer.new(width, height)
 
-    // const baseLayer = new ColorImage(width, height)
-    // baseLayer.image.fill(255)
-    // layers.add(baseLayer)
-    // layers.add(new ColorImage(width, height))
-    // pixel = layers.image
     const pixelsPtr = layers.pixels()
     console.log(pixelsPtr)
     console.log(memory.buffer)
@@ -68,7 +51,6 @@ export const useImage = () => {
 
   const stroke = (pos: Position): void => {
     if (w.value === undefined || h.value === undefined) return
-    // console.log(pos)
     layers.stroke(pos.x, pos.y, pos.pressure)
   }
 
@@ -76,8 +58,6 @@ export const useImage = () => {
     // const image = undoBuffer.undo()
     // if (image === undefined) return
     // imageData.data.set(image.data)
-    // newlayer()
-    // await layers.redraw()
   }
 
   function redo() {
@@ -89,13 +69,6 @@ export const useImage = () => {
   const redraw = () => {
     if (layers === undefined) return
     if (pixel === undefined) return
-    // const pixelsPtr = layers.pixels()
-    // // console.log(pixelsPtr)
-    // // console.log(memory.buffer)
-    // pixel = new Uint8ClampedArray(memory.buffer, pixelsPtr, w.value * h.value * 4);
-    // // console.log(pixel.slice(0, 32))
-
-    // imageData = new ImageData(pixel, w.value, h.value)
     buffctx.value?.putImageData(imageData, 0, 0)
 
     requestId = requestAnimationFrame(redraw)
