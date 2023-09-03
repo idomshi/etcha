@@ -1,6 +1,6 @@
 import { UndoBuffer } from "./UndoBuffer";
 import type { Layer } from "./Layers";
-import init, { SimpleLayer as WasmLayer } from '@/assets/wasm/wasm'
+import init, { Layer as WasmLayer } from '@/assets/wasm/wasm'
 
 let memory: WebAssembly.Memory;
 memory = (await init()).memory
@@ -77,7 +77,7 @@ export const useImage = () => {
     // if (image === undefined) return
     // imageData.data.set(image.data)
     // newlayer()
-    await layers.redraw()
+    // await layers.redraw()
   }
 
   function redo() {

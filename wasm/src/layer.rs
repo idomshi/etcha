@@ -1,6 +1,5 @@
 pub mod color_image;
 
-use color_image::ColorImage;
 use wasm_bindgen::prelude::wasm_bindgen;
 
 #[derive(Debug)]
@@ -12,12 +11,8 @@ pub struct BoundingBox {
 }
 
 pub trait ImageLayer {
-    fn new(width: u16, height: u16) -> Self;
     fn stroke(&mut self, x: f64, y: f64, pressure: f64) -> BoundingBox;
-}
-
-enum LayerType {
-    ColorImage(ColorImage),
+    fn pixels(&self) -> *const u8;
 }
 
 #[wasm_bindgen]
@@ -30,33 +25,22 @@ pub struct Position {
 
 #[wasm_bindgen]
 pub struct Layer {
-    data: LayerType,
+    data: Box<dyn ImageLayer>,
 }
 
 #[wasm_bindgen]
 impl Layer {
     pub fn new(width: u16, height: u16) -> Layer {
         Layer {
-            data: LayerType::ColorImage(color_image::ColorImage::new(width, height)),
+            data: Box::new(color_image::ColorImage::new(width, height)),
         }
     }
 
-    pub fn len(&self) -> usize {
-        match &self.data {
-            LayerType::ColorImage(v) => v.pixels.len(),
-        }
-    }
-
-    pub fn get_pixels(&self) -> *const u8 {
-        match &self.data {
-            LayerType::ColorImage(v) => v.pixels.as_ptr(),
-        }
+    pub fn pixels(&self) -> *const u8 {
+        self.data.pixels()
     }
 
     pub fn stroke(&mut self, x: f64, y: f64, pressure: f64) {
-        println!("{}, {}, {}", x, y, pressure);
-        match &mut self.data {
-            LayerType::ColorImage(v) => v.stroke(x, y, pressure)
-        };
+        self.data.stroke(x, y, pressure);
     }
 }
