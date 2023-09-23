@@ -1,7 +1,7 @@
 //! Imageを操作するWebAssembly
 //!
 //! フロントエンド側に読み込むには、
-//! ```
+//! ```ts
 //! import init, { greet } from '../assets/wasm/wasm'
 //!
 //! let memory: WebAssembly.Memory
@@ -13,7 +13,7 @@
 //!
 //! という風に初期化しておいて、
 //!
-//! ```
+//! ```ts
 //! obj = (WasmStruct).new()
 //! const ptr = obj.pixels()
 //! const length = obj.length()
