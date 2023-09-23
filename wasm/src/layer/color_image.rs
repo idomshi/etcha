@@ -1,11 +1,12 @@
 use super::{BoundingBox, ImageLayer};
 use std::convert::TryInto;
+use crate::utils;
 
 #[derive(Debug)]
 pub struct ColorImage {
     pixels: Vec<u8>,
-    width: u16,
-    height: u16,
+    width: i32,
+    height: i32,
     is_drawing: bool,
     previouse_pos: super::Position,
 }
@@ -65,7 +66,9 @@ impl ImageLayer for ColorImage {
 }
 
 impl ColorImage {
-    pub fn new(width: u16, height: u16) -> ColorImage {
+    pub fn new(width: i32, height: i32) -> ColorImage {
+        utils::set_panic_hook();
+        // Todo: widthとheightの範囲をチェックしないといけないけどあとで。
         let length: usize = (width as u32 * height as u32 * 4).try_into().unwrap();
         ColorImage {
             pixels: vec![0; length],
@@ -115,7 +118,13 @@ impl ColorImage {
 
     /// 点をプロットする。
     fn plot(&mut self, x: i32, y: i32) {
+        if x < 0 || x > self.width || y < 0 || y > self.height {
+            return;
+        }
         let idx = ((y * self.width as i32 + x) * 4) as usize;
+        if idx > self.pixels.len() {
+            return;
+        }
         self.pixels[idx] = 0;
         self.pixels[idx + 1] = 0;
         self.pixels[idx + 2] = 0;

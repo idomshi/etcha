@@ -30,7 +30,7 @@ pub struct Layer {
 
 #[wasm_bindgen]
 impl Layer {
-    pub fn new(width: u16, height: u16) -> Layer {
+    pub fn new(width: i32, height: i32) -> Layer {
         Layer {
             data: Box::new(color_image::ColorImage::new(width, height)),
         }
