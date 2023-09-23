@@ -1,31 +1,17 @@
 use super::{BoundingBox, ImageLayer};
 use std::convert::TryInto;
+use crate::utils;
 
 #[derive(Debug)]
 pub struct ColorImage {
-    pub pixels: Vec<u8>,
-    width: u16,
-    height: u16,
+    pixels: Vec<u8>,
+    width: i32,
+    height: i32,
     is_drawing: bool,
     previouse_pos: super::Position,
 }
 
 impl ImageLayer for ColorImage {
-    fn new(width: u16, height: u16) -> ColorImage {
-        let length: usize = (width * height * 4).try_into().unwrap();
-        ColorImage {
-            pixels: vec![0; length],
-            width: width,
-            height: height,
-            is_drawing: false,
-            previouse_pos: super::Position {
-                x: 0.0,
-                y: 0.0,
-                pressure: 0.0,
-            },
-        }
-    }
-
     fn stroke(&mut self, x: f64, y: f64, pressure: f64) -> BoundingBox {
         let mut result = BoundingBox {
             left: 0,
@@ -39,14 +25,11 @@ impl ImageLayer for ColorImage {
 
                 // undoバッファに突っ込む。
             };
-            self.line(
-                &self.previouse_pos.clone(),
-                &super::Position {
-                    x: x,
-                    y: y,
-                    pressure: pressure,
-                },
-            );
+            self.line(&super::Position {
+                x: x,
+                y: y,
+                pressure: pressure,
+            });
             result = BoundingBox {
                 left: x.min(self.previouse_pos.x).floor() as u32,
                 top: y.min(self.previouse_pos.y).floor() as u32,
@@ -71,36 +54,58 @@ impl ImageLayer for ColorImage {
                 y: y,
                 pressure: pressure,
             };
-            self.plot(x, y);
+            self.plot(x.round() as i32, y.round() as i32);
         }
 
         result
     }
+
+    fn pixels(&self) -> *const u8 {
+        self.pixels.as_ptr()
+    }
 }
 
 impl ColorImage {
+    pub fn new(width: i32, height: i32) -> ColorImage {
+        utils::set_panic_hook();
+        // Todo: widthとheightの範囲をチェックしないといけないけどあとで。
+        let length: usize = (width as u32 * height as u32 * 4).try_into().unwrap();
+        ColorImage {
+            pixels: vec![0; length],
+            width: width,
+            height: height,
+            is_drawing: false,
+            previouse_pos: super::Position {
+                x: 0.0,
+                y: 0.0,
+                pressure: 0.0,
+            },
+        }
+    }
+
     /// p1からp2まで直線を描画する。
-    fn line(&mut self, p1: &super::Position, p2: &super::Position) {
+    fn line(&mut self, p2: &super::Position) {
+        let p1 = &self.previouse_pos;
         let x0 = p1.x.round() as i32;
         let y0 = p1.y.round() as i32;
         let x1 = p2.x.round() as i32;
         let y1 = p2.y.round() as i32;
-        let dx = x1.abs_diff(x0);
-        let dy = y1.abs_diff(y0);
+        let dx = x1.abs_diff(x0) as i32;
+        let dy = y1.abs_diff(y0) as i32;
         let sx = if x0 < x1 { 1 } else { -1 } as i32;
         let sy = if y0 < y1 { 1 } else { -1 } as i32;
-        let mut err = dx - dy;
+        let mut err = dx as i32 - dy as i32;
 
         let mut x = x0;
         let mut y = y0;
 
         loop {
-            self.plot(x as f64, y as f64);
+            self.plot(x, y);
             if x == x1 && y == y1 {
                 break;
             }
             let e2 = 2 * err;
-            if e2 as i32 > -(dy as i32) {
+            if e2 > -dy {
                 err -= dy;
                 x += sx;
             }
@@ -112,8 +117,14 @@ impl ColorImage {
     }
 
     /// 点をプロットする。
-    fn plot(&mut self, x: f64, y: f64) {
-        let idx = ((y as usize) * (self.width as usize) + (x as usize)) * 4;
+    fn plot(&mut self, x: i32, y: i32) {
+        if x < 0 || x > self.width || y < 0 || y > self.height {
+            return;
+        }
+        let idx = ((y * self.width as i32 + x) * 4) as usize;
+        if idx > self.pixels.len() {
+            return;
+        }
         self.pixels[idx] = 0;
         self.pixels[idx + 1] = 0;
         self.pixels[idx + 2] = 0;
