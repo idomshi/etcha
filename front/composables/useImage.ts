@@ -39,10 +39,7 @@ export const useImage = () => {
     layers = WasmLayer.new(width, height)
 
     const pixelsPtr = layers.pixels()
-    console.log(pixelsPtr)
-    console.log(memory.buffer)
     pixel = new Uint8ClampedArray(memory.buffer, pixelsPtr, width * height * 4);
-    console.log(pixel)
     imageData = new ImageData(pixel, width, height)
     // undoBuffer = new UndoBuffer<ImageData>(
     //   new ImageData(new Uint8ClampedArray(pixel), width)
