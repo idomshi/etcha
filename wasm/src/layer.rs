@@ -1,4 +1,5 @@
 pub mod color_image;
+pub mod folder;
 
 use wasm_bindgen::prelude::wasm_bindgen;
 
