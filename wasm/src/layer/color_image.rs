@@ -64,8 +64,8 @@ impl ImageLayer for ColorImage {
         self.pixels.as_ptr()
     }
 
-    fn pixel(&self) -> &Vec<u8> {
-        &self.pixels
+    fn pixel(&mut self) -> &mut Vec<u8> {
+        &mut self.pixels
     }
 }
 
