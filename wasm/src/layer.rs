@@ -13,7 +13,8 @@ pub struct BoundingBox {
 
 pub trait ImageLayer {
     fn stroke(&mut self, x: f64, y: f64, pressure: f64) -> BoundingBox;
-    fn pixels(&self) -> *const u8;
+    fn pixel_pointer(&self) -> *const u8;
+    fn pixel(&self) -> &Vec<u8>;
 }
 
 #[wasm_bindgen]
@@ -38,7 +39,7 @@ impl Layer {
     }
 
     pub fn pixels(&self) -> *const u8 {
-        self.data.pixels()
+        self.data.pixel_pointer()
     }
 
     pub fn stroke(&mut self, x: f64, y: f64, pressure: f64) {
