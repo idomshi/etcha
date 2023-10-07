@@ -1,6 +1,6 @@
 use super::{BoundingBox, ImageLayer};
-use std::convert::TryInto;
 use crate::utils;
+use std::convert::TryInto;
 
 #[derive(Debug)]
 pub struct ColorImage {
@@ -60,8 +60,12 @@ impl ImageLayer for ColorImage {
         result
     }
 
-    fn pixels(&self) -> *const u8 {
+    fn pixel_pointer(&self) -> *const u8 {
         self.pixels.as_ptr()
+    }
+
+    fn pixel(&mut self) -> &mut Vec<u8> {
+        &mut self.pixels
     }
 }
 
