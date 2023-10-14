@@ -31,7 +31,11 @@ export default function useViewPosition() {
     posArray.value.angle = ((angle % n) + n) % n
   }
 
-  function zoomIn(x: number = 0, y: number = 0) {
+  function zoomIn(x: number | undefined, y: number | undefined) {
+    // カーソル座標が無かったら画像の中心を中心にして拡縮する。
+    if (x === undefined) x = posArray.value.center.x
+    if (y === undefined) y = posArray.value.center.y
+
     const factor = 1.25
     posArray.value.scale *= factor
 
@@ -42,7 +46,11 @@ export default function useViewPosition() {
     }
   }
 
-  function zoomOut(x: number = 0, y: number = 0) {
+  function zoomOut(x: number | undefined, y: number | undefined) {
+    // カーソル座標が無かったら画像の中心を中心にして拡縮する。
+    if (x === undefined) x = posArray.value.center.x
+    if (y === undefined) y = posArray.value.center.y
+
     const factor = 0.8
     posArray.value.scale *= factor
     posArray.value.center = {
