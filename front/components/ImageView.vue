@@ -70,9 +70,9 @@ const dragend = (e: PointerEvent) => {
 
 const wheel = (e: WheelEvent) => {
   if (e.deltaY > 0) {
-    zoomOut()
+    zoomOut(e.offsetX, e.offsetY)
   } else {
-    zoomIn()
+    zoomIn(e.offsetX, e.offsetY)
   }
 }
 
