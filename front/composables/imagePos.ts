@@ -31,12 +31,24 @@ export default function useViewPosition() {
     posArray.value.angle = ((angle % n) + n) % n
   }
 
-  function zoomIn() {
-    posArray.value.scale *= 1.25
+  function zoomIn(x: number = 0, y: number = 0) {
+    const factor = 1.25
+    posArray.value.scale *= factor
+
+    // ここで[x, y]から拡縮後のcenterを計算しなくてはならないのですが。
+    posArray.value.center = {
+      x: (posArray.value.center.x - x) * factor + x,
+      y: (posArray.value.center.y - y) * factor + y
+    }
   }
 
-  function zoomOut() {
-    posArray.value.scale *= 0.8
+  function zoomOut(x: number = 0, y: number = 0) {
+    const factor = 0.8
+    posArray.value.scale *= factor
+    posArray.value.center = {
+      x: (posArray.value.center.x - x) * factor + x,
+      y: (posArray.value.center.y - y) * factor + y
+    }
   }
 
   return {
