@@ -33,8 +33,8 @@ impl ImageLayer for ColorImage {
             result = BoundingBox {
                 left: x.min(self.previouse_pos.x).floor() as u32,
                 top: y.min(self.previouse_pos.y).floor() as u32,
-                width: (self.previouse_pos.x - x).abs().ceil() as u32,
-                height: (self.previouse_pos.y - y).abs().ceil() as u32,
+                width: (self.previouse_pos.x - x).abs().ceil() as u32 + 1,
+                height: (self.previouse_pos.y - y).abs().ceil() as u32 + 1,
             };
             self.previouse_pos = super::Position {
                 x: x,
