@@ -4,8 +4,8 @@ use crate::{
 };
 
 pub struct Folder {
-    width: u32,
-    height: u32,
+    width: i32,
+    height: i32,
     items: Vec<Box<dyn ImageLayer>>,
     active: Option<usize>,
     pixels: Vec<u8>,
@@ -37,7 +37,7 @@ impl ImageLayer for Folder {
 }
 
 impl Folder {
-    pub fn new(width: u32, height: u32) -> Folder {
+    pub fn new(width: i32, height: i32) -> Folder {
         utils::set_panic_hook();
 
         let length = (width * height * 4) as usize;
@@ -70,7 +70,7 @@ impl Folder {
                 if r >= self.height {
                     break;
                 }
-                let row = r as u32 * self.width;
+                let row = r * self.width;
                 for c in bb.left..=(bb.left + bb.width) {
                     if c >= self.width {
                         break;
@@ -94,7 +94,7 @@ impl Folder {
             if r >= self.height {
                 break;
             }
-            let row = r as u32 * self.width;
+            let row = r * self.width;
             for c in bb.left..=(bb.left + bb.width) {
                 if c >= self.width {
                     break;

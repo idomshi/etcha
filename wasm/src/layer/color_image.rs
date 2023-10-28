@@ -45,10 +45,10 @@ impl ImageLayer for ColorImage {
                 erase,
             );
             result = BoundingBox {
-                left: x.min(self.previouse_pos.x).floor() as u32 - radius,
-                top: y.min(self.previouse_pos.y).floor() as u32 - radius,
-                width: (self.previouse_pos.x - x).abs().ceil() as u32 + 1 + radius + radius,
-                height: (self.previouse_pos.y - y).abs().ceil() as u32 + 1 + radius + radius,
+                left: x.min(self.previouse_pos.x).floor() as i32 - radius,
+                top: y.min(self.previouse_pos.y).floor() as i32 - radius,
+                width: (self.previouse_pos.x - x).abs().ceil() as i32 + 1 + radius + radius,
+                height: (self.previouse_pos.y - y).abs().ceil() as i32 + 1 + radius + radius,
             };
             self.previouse_pos = super::Position {
                 x: x,
@@ -58,8 +58,8 @@ impl ImageLayer for ColorImage {
         } else {
             self.is_drawing = true;
             result = BoundingBox {
-                left: x.floor() as u32 - radius,
-                top: y.floor() as u32 - radius,
+                left: x.floor() as i32 - radius,
+                top: y.floor() as i32 - radius,
                 width: 1 + radius + radius,
                 height: 1 + radius + radius,
             };
@@ -170,10 +170,10 @@ impl ColorImage {
         }
 
         let mut idx: usize;
-        for r in (y - radius)..(y + radius) {
+        for r in (y - radius).max(0)..(y + radius).min(self.height) {
             let row = r * self.width;
             let ty = (r - y) * (r - y);
-            for c in (x - radius)..(x + radius) {
+            for c in (x - radius).max(0)..(x + radius).min(self.width) {
                 idx = (row + c) as usize * 4;
                 if idx > self.pixels.len() {
                     return;
