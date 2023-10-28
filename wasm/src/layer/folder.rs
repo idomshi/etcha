@@ -66,15 +66,9 @@ impl Folder {
 
     fn redraw_cache(&mut self, bb: &BoundingBox) {
         for layer in &mut self.items {
-            for r in bb.top..=(bb.top + bb.height) {
-                if r >= self.height {
-                    break;
-                }
+            for r in bb.top.max(0)..=(bb.top + bb.height).min(self.height - 1) {
                 let row = r * self.width;
-                for c in bb.left..=(bb.left + bb.width) {
-                    if c >= self.width {
-                        break;
-                    }
+                for c in bb.left.max(0)..=(bb.left + bb.width).min(self.width - 1) {
                     let idx = ((row + c) * 4) as usize;
                     let pixel = layer.pixel();
                     let opacity = pixel[idx + 3] as f64 / 255.0;
@@ -90,15 +84,9 @@ impl Folder {
             }
         }
 
-        for r in bb.top..=(bb.top + bb.height) {
-            if r >= self.height {
-                break;
-            }
+        for r in bb.top.max(0)..=(bb.top + bb.height).min(self.height - 1) {
             let row = r * self.width;
-            for c in bb.left..=(bb.left + bb.width) {
-                if c >= self.width {
-                    break;
-                }
+            for c in bb.left.max(0)..=(bb.left + bb.width).min(self.width - 1) {
                 let idx = ((row + c) * 4) as usize;
                 self.pixels[idx] = self.cache[idx].clamp(0.0, 255.0) as u8;
                 self.pixels[idx + 1] = self.cache[idx + 1].clamp(0.0, 255.0) as u8;
