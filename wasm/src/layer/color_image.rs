@@ -22,6 +22,7 @@ pub struct ColorImage {
 
 impl ImageLayer for ColorImage {
     fn stroke(&mut self, x: f64, y: f64, pressure: f64, erase: bool) -> BoundingBox {
+        let radius = 4;
         let mut result = BoundingBox {
             left: 0,
             top: 0,
@@ -44,10 +45,10 @@ impl ImageLayer for ColorImage {
                 erase,
             );
             result = BoundingBox {
-                left: x.min(self.previouse_pos.x).floor() as u32,
-                top: y.min(self.previouse_pos.y).floor() as u32,
-                width: (self.previouse_pos.x - x).abs().ceil() as u32 + 1,
-                height: (self.previouse_pos.y - y).abs().ceil() as u32 + 1,
+                left: x.min(self.previouse_pos.x).floor() as u32 - radius,
+                top: y.min(self.previouse_pos.y).floor() as u32 - radius,
+                width: (self.previouse_pos.x - x).abs().ceil() as u32 + 1 + radius + radius,
+                height: (self.previouse_pos.y - y).abs().ceil() as u32 + 1 + radius + radius,
             };
             self.previouse_pos = super::Position {
                 x: x,
@@ -57,17 +58,18 @@ impl ImageLayer for ColorImage {
         } else {
             self.is_drawing = true;
             result = BoundingBox {
-                left: x.floor() as u32,
-                top: y.floor() as u32,
-                width: 1,
-                height: 1,
+                left: x.floor() as u32 - radius,
+                top: y.floor() as u32 - radius,
+                width: 1 + radius + radius,
+                height: 1 + radius + radius,
             };
             self.previouse_pos = super::Position {
                 x: x,
                 y: y,
                 pressure: pressure,
             };
-            self.plot(x.round() as i32, y.round() as i32, erase);
+            // self.plot(x.round() as i32, y.round() as i32, erase);
+            self.plot_circle(x.round() as i32, y.round() as i32, erase);
         }
 
         result
@@ -118,7 +120,8 @@ impl ColorImage {
         let mut y = y0;
 
         loop {
-            self.plot(x, y, erase);
+            // self.plot(x, y, erase);
+            self.plot_circle(x, y, erase);
             if x == x1 && y == y1 {
                 break;
             }
@@ -154,6 +157,42 @@ impl ColorImage {
             self.pixels[idx + 1] = 0;
             self.pixels[idx + 2] = 0;
             self.pixels[idx + 3] = 255;
+        }
+    }
+
+    /// 円をプロットする。
+    fn plot_circle(&mut self, x: i32, y: i32, erase: bool) {
+        let radius = 4;
+        let tr = radius * radius;
+
+        if x < 0 - radius || x > self.width + radius || y < 0 - radius || y > self.height + radius {
+            return;
+        }
+
+        let mut idx: usize;
+        for r in (y - radius)..(y + radius) {
+            let row = r * self.width;
+            let ty = (r - y) * (r - y);
+            for c in (x - radius)..(x + radius) {
+                idx = (row + c) as usize * 4;
+                if idx > self.pixels.len() {
+                    return;
+                }
+
+                if (c - x) * (c - x) + ty < tr {
+                    if erase {
+                        self.pixels[idx] = 0;
+                        self.pixels[idx + 1] = 0;
+                        self.pixels[idx + 2] = 0;
+                        self.pixels[idx + 3] = 0;
+                    } else {
+                        self.pixels[idx] = 0;
+                        self.pixels[idx + 1] = 0;
+                        self.pixels[idx + 2] = 0;
+                        self.pixels[idx + 3] = 255;
+                    }
+                }
+            }
         }
     }
 }
