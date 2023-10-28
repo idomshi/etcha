@@ -30,9 +30,9 @@ async function exoprtAsPng() {
     <button @click="exoprtAsPng" class="px-4 h-8 bg-slate-300 border-2 border-slate-400 rounded">PNG↓</button>
     <button @click="undo" class="px-4 h-8 bg-slate-300 border-2 border-slate-400 rounded">Undo</button>
     <button @click="redo" class="px-4 h-8 bg-slate-300 border-2 border-slate-400 rounded">Redo</button>
-    <div>
+    <div class="flex flex-row items-center">
       <label for="erase-check">消しゴム</label>
-      <input type="checkbox" id="erase-check" v-model="erase">
+      <input type="checkbox" id="erase-check" v-model="erase" class="ml-1">
     </div>
   </div>
 </template>
