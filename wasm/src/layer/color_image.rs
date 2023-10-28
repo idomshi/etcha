@@ -1,6 +1,14 @@
 use super::{BoundingBox, ImageLayer};
 use crate::utils;
 use std::convert::TryInto;
+extern crate web_sys;
+
+#[allow(unused_macros)]
+macro_rules! log {
+    ( $( $t:tt )* ) => {
+        web_sys::console::log_1(&format!( $( $t )* ).into());
+    }
+}
 
 #[derive(Debug)]
 pub struct ColorImage {
