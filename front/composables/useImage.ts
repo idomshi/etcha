@@ -1,4 +1,5 @@
 import { UndoBuffer } from "./UndoBuffer";
+import { usePenState } from "./usePenState";
 import init, { Layer as WasmLayer } from '@/assets/wasm/wasm'
 
 let memory: WebAssembly.Memory;
@@ -24,6 +25,7 @@ let undoBuffer: UndoBuffer<ImageData>
 let requestId = 0
 
 export const useImage = () => {
+  const { erase } = usePenState()
   // やっぱりImageDataが使えないよって文句言ってるんだ！！
   // SSRを切ればImageDataも使えそうだ！！
   const w = useState("w", () => 0)
@@ -48,7 +50,7 @@ export const useImage = () => {
 
   const stroke = (pos: Position): void => {
     if (w.value === undefined || h.value === undefined) return
-    layers.stroke(pos.x, pos.y, pos.pressure)
+    layers.stroke(pos.x, pos.y, pos.pressure, erase.value)
   }
 
   async function undo() {

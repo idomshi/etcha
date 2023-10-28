@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import useViewPosition from '~/composables/imagePos';
+import { usePenState } from '~/composables/usePenState';
 
 const { buffcanvas, undo, redo } = useImage()
 const { posArray, setAngle } = useViewPosition()
+const { erase } = usePenState()
 const incAngle = () => {
   setAngle(posArray.value.angle + 0.05)
 }
@@ -28,5 +30,9 @@ async function exoprtAsPng() {
     <button @click="exoprtAsPng" class="px-4 h-8 bg-slate-300 border-2 border-slate-400 rounded">PNG↓</button>
     <button @click="undo" class="px-4 h-8 bg-slate-300 border-2 border-slate-400 rounded">Undo</button>
     <button @click="redo" class="px-4 h-8 bg-slate-300 border-2 border-slate-400 rounded">Redo</button>
+    <div>
+      <label for="erase-check">消しゴム</label>
+      <input type="checkbox" id="erase-check" v-model="erase">
+    </div>
   </div>
 </template>
