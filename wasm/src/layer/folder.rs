@@ -13,9 +13,9 @@ pub struct Folder {
 }
 
 impl ImageLayer for Folder {
-    fn stroke(&mut self, x: f64, y: f64, pressure: f64) -> BoundingBox {
+    fn stroke(&mut self, x: f64, y: f64, pressure: f64, erase: bool) -> BoundingBox {
         let bb = match self.active {
-            Some(i) => self.items[i].stroke(x, y, pressure),
+            Some(i) => self.items[i].stroke(x, y, pressure, erase),
             None => BoundingBox {
                 left: 0,
                 top: 0,

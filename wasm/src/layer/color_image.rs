@@ -9,10 +9,11 @@ pub struct ColorImage {
     height: i32,
     is_drawing: bool,
     previouse_pos: super::Position,
+    prev_pxs: Vec<u8>,
 }
 
 impl ImageLayer for ColorImage {
-    fn stroke(&mut self, x: f64, y: f64, pressure: f64) -> BoundingBox {
+    fn stroke(&mut self, x: f64, y: f64, pressure: f64, erase: bool) -> BoundingBox {
         let mut result = BoundingBox {
             left: 0,
             top: 0,
@@ -22,14 +23,18 @@ impl ImageLayer for ColorImage {
         if self.is_drawing {
             if pressure == 0.0 {
                 self.is_drawing = false;
+                self.prev_pxs = self.pixels.clone();
 
                 // undoバッファに突っ込む。
             };
-            self.line(&super::Position {
-                x: x,
-                y: y,
-                pressure: pressure,
-            });
+            self.line(
+                &super::Position {
+                    x: x,
+                    y: y,
+                    pressure: pressure,
+                },
+                erase,
+            );
             result = BoundingBox {
                 left: x.min(self.previouse_pos.x).floor() as u32,
                 top: y.min(self.previouse_pos.y).floor() as u32,
@@ -54,7 +59,7 @@ impl ImageLayer for ColorImage {
                 y: y,
                 pressure: pressure,
             };
-            self.plot(x.round() as i32, y.round() as i32);
+            self.plot(x.round() as i32, y.round() as i32, erase);
         }
 
         result
@@ -84,11 +89,12 @@ impl ColorImage {
                 y: 0.0,
                 pressure: 0.0,
             },
+            prev_pxs: vec![0; length],
         }
     }
 
     /// p1からp2まで直線を描画する。
-    fn line(&mut self, p2: &super::Position) {
+    fn line(&mut self, p2: &super::Position, erase: bool) {
         let p1 = &self.previouse_pos;
         let x0 = p1.x.round() as i32;
         let y0 = p1.y.round() as i32;
@@ -104,7 +110,7 @@ impl ColorImage {
         let mut y = y0;
 
         loop {
-            self.plot(x, y);
+            self.plot(x, y, erase);
             if x == x1 && y == y1 {
                 break;
             }
@@ -121,7 +127,7 @@ impl ColorImage {
     }
 
     /// 点をプロットする。
-    fn plot(&mut self, x: i32, y: i32) {
+    fn plot(&mut self, x: i32, y: i32, erase: bool) {
         if x < 0 || x > self.width || y < 0 || y > self.height {
             return;
         }
@@ -129,9 +135,17 @@ impl ColorImage {
         if idx > self.pixels.len() {
             return;
         }
-        self.pixels[idx] = 0;
-        self.pixels[idx + 1] = 0;
-        self.pixels[idx + 2] = 0;
-        self.pixels[idx + 3] = 255;
+
+        if erase {
+            self.pixels[idx] = 0;
+            self.pixels[idx + 1] = 0;
+            self.pixels[idx + 2] = 0;
+            self.pixels[idx + 3] = 0;
+        } else {
+            self.pixels[idx] = 0;
+            self.pixels[idx + 1] = 0;
+            self.pixels[idx + 2] = 0;
+            self.pixels[idx + 3] = 255;
+        }
     }
 }

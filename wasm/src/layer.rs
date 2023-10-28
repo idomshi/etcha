@@ -14,7 +14,7 @@ pub struct BoundingBox {
 }
 
 pub trait ImageLayer {
-    fn stroke(&mut self, x: f64, y: f64, pressure: f64) -> BoundingBox;
+    fn stroke(&mut self, x: f64, y: f64, pressure: f64, erase: bool) -> BoundingBox;
     fn pixel_pointer(&self) -> *const u8;
     fn pixel(&mut self) -> &mut Vec<u8>;
 }
@@ -56,7 +56,7 @@ impl Layer {
         self.data.pixel_pointer()
     }
 
-    pub fn stroke(&mut self, x: f64, y: f64, pressure: f64) {
-        self.data.stroke(x, y, pressure);
+    pub fn stroke(&mut self, x: f64, y: f64, pressure: f64, erase: bool) {
+        self.data.stroke(x, y, pressure, erase);
     }
 }
