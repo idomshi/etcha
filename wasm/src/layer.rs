@@ -7,10 +7,10 @@ use crate::utils;
 
 #[derive(Debug)]
 pub struct BoundingBox {
-    left: u32,
-    top: u32,
-    width: u32,
-    height: u32,
+    left: i32,
+    top: i32,
+    width: i32,
+    height: i32,
 }
 
 pub trait ImageLayer {
@@ -43,8 +43,7 @@ impl Layer {
 
         let fore_layer = color_image::ColorImage::new(width, height);
 
-        // 引数の型がi32なのは間違いでは？
-        let mut folder = folder::Folder::new(width as u32, height as u32);
+        let mut folder = folder::Folder::new(width, height);
         folder.add_layers(&mut vec![Box::new(bg_layer), Box::new(fore_layer)]);
 
         Layer {
