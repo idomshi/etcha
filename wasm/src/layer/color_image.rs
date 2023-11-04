@@ -1,4 +1,5 @@
 use super::{BoundingBox, ImageLayer};
+use crate::pen::Pen;
 use crate::utils;
 use std::convert::TryInto;
 extern crate web_sys;
@@ -10,7 +11,7 @@ macro_rules! log {
     }
 }
 
-#[derive(Debug)]
+// #[derive(Debug)]
 pub struct ColorImage {
     pixels: Vec<u8>,
     width: i32,
@@ -18,6 +19,7 @@ pub struct ColorImage {
     is_drawing: bool,
     previouse_pos: super::Position,
     prev_pxs: Vec<u8>,
+    pen: Pen,
 }
 
 impl ImageLayer for ColorImage {
@@ -68,8 +70,14 @@ impl ImageLayer for ColorImage {
                 y: y,
                 pressure: pressure,
             };
-            // self.plot(x.round() as i32, y.round() as i32, erase);
-            self.plot_circle(x.round() as i32, y.round() as i32, erase);
+            self.line(
+                &super::Position {
+                    x: x,
+                    y: y,
+                    pressure: pressure,
+                },
+                erase,
+            )
         }
 
         result
@@ -100,41 +108,19 @@ impl ColorImage {
                 pressure: 0.0,
             },
             prev_pxs: vec![0; length],
+            pen: Pen::new(),
         }
     }
 
     /// p1からp2まで直線を描画する。
     fn line(&mut self, p2: &super::Position, erase: bool) {
-        let p1 = &self.previouse_pos;
-        let x0 = p1.x.round() as i32;
-        let y0 = p1.y.round() as i32;
-        let x1 = p2.x.round() as i32;
-        let y1 = p2.y.round() as i32;
-        let dx = x1.abs_diff(x0) as i32;
-        let dy = y1.abs_diff(y0) as i32;
-        let sx = if x0 < x1 { 1 } else { -1 } as i32;
-        let sy = if y0 < y1 { 1 } else { -1 } as i32;
-        let mut err = dx as i32 - dy as i32;
-
-        let mut x = x0;
-        let mut y = y0;
-
-        loop {
-            // self.plot(x, y, erase);
-            self.plot_circle(x, y, erase);
-            if x == x1 && y == y1 {
-                break;
-            }
-            let e2 = 2 * err;
-            if e2 > -dy {
-                err -= dy;
-                x += sx;
-            }
-            if e2 < dx {
-                err += dx;
-                y += sy;
-            }
-        }
+        self.pen.line(
+            &self.previouse_pos,
+            p2,
+            self.width,
+            self.height,
+            &mut self.pixels,
+        )
     }
 
     /// 点をプロットする。

@@ -24,6 +24,7 @@
 //!
 
 mod layer;
+mod pen;
 mod simple_layer;
 mod utils;
 
