@@ -1,5 +1,6 @@
 use crate::{
     layer::{BoundingBox, ImageLayer},
+    pen::DrawingPen,
     utils,
 };
 
@@ -13,9 +14,9 @@ pub struct Folder {
 }
 
 impl ImageLayer for Folder {
-    fn stroke(&mut self, x: f64, y: f64, pressure: f64, erase: bool) -> BoundingBox {
+    fn stroke(&mut self, x: f64, y: f64, pressure: f64, pen: &Box<dyn DrawingPen>) -> BoundingBox {
         let bb = match self.active {
-            Some(i) => self.items[i].stroke(x, y, pressure, erase),
+            Some(i) => self.items[i].stroke(x, y, pressure, pen),
             None => BoundingBox {
                 left: 0,
                 top: 0,

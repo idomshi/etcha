@@ -1,5 +1,5 @@
 use super::{BoundingBox, ImageLayer};
-use crate::pen::Pen;
+use crate::pen::DrawingPen;
 use crate::utils;
 use std::convert::TryInto;
 extern crate web_sys;
@@ -19,11 +19,10 @@ pub struct ColorImage {
     is_drawing: bool,
     previouse_pos: super::Position,
     prev_pxs: Vec<u8>,
-    pen: Pen,
 }
 
 impl ImageLayer for ColorImage {
-    fn stroke(&mut self, x: f64, y: f64, pressure: f64, erase: bool) -> BoundingBox {
+    fn stroke(&mut self, x: f64, y: f64, pressure: f64, pen: &Box<dyn DrawingPen>) -> BoundingBox {
         let radius = 4;
         let mut result = BoundingBox {
             left: 0,
@@ -44,7 +43,7 @@ impl ImageLayer for ColorImage {
                     y: y,
                     pressure: pressure,
                 },
-                erase,
+                pen,
             );
             result = BoundingBox {
                 left: x.min(self.previouse_pos.x).floor() as i32 - radius,
@@ -76,7 +75,7 @@ impl ImageLayer for ColorImage {
                     y: y,
                     pressure: pressure,
                 },
-                erase,
+                pen,
             )
         }
 
@@ -108,13 +107,12 @@ impl ColorImage {
                 pressure: 0.0,
             },
             prev_pxs: vec![0; length],
-            pen: Pen::new(),
         }
     }
 
     /// p1からp2まで直線を描画する。
-    fn line(&mut self, p2: &super::Position, erase: bool) {
-        self.pen.line(
+    fn line(&mut self, p2: &super::Position, pen: &Box<dyn DrawingPen>) {
+        pen.line(
             &self.previouse_pos,
             p2,
             self.width,
