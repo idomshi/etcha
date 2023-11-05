@@ -1,6 +1,6 @@
 import { UndoBuffer } from "./UndoBuffer";
 import { usePenState } from "./usePenState";
-import init, { Layer as WasmLayer } from '@/assets/wasm/wasm'
+import init, { ImageDocument } from '@/assets/wasm/wasm'
 
 let memory: WebAssembly.Memory;
 memory = (await init()).memory
@@ -18,7 +18,7 @@ export interface BoundingBox {
   height: number;
 }
 
-let layers: WasmLayer
+let document: ImageDocument
 let pixel: Uint8ClampedArray
 let imageData: ImageData
 let undoBuffer: UndoBuffer<ImageData>
@@ -38,9 +38,9 @@ export const useImage = () => {
     h.value = height
     buffcanvas.value = new OffscreenCanvas(width, height)
     buffctx.value = buffcanvas.value.getContext("2d") ?? undefined
-    layers = WasmLayer.new(width, height)
+    document = ImageDocument.new(width, height)
 
-    const pixelsPtr = layers.pixels()
+    const pixelsPtr = document.pixels()
     pixel = new Uint8ClampedArray(memory.buffer, pixelsPtr, width * height * 4);
     imageData = new ImageData(pixel, width, height)
     // undoBuffer = new UndoBuffer<ImageData>(
@@ -50,7 +50,7 @@ export const useImage = () => {
 
   const stroke = (pos: Position): void => {
     if (w.value === undefined || h.value === undefined) return
-    layers.stroke(pos.x, pos.y, pos.pressure, erase.value)
+    document.stroke(pos.x, pos.y, pos.pressure)
   }
 
   async function undo() {
@@ -66,7 +66,7 @@ export const useImage = () => {
   }
 
   const redraw = () => {
-    if (layers === undefined) return
+    if (document === undefined) return
     if (pixel === undefined) return
     buffctx.value?.putImageData(imageData, 0, 0)
 
