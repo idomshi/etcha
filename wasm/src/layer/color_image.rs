@@ -23,7 +23,7 @@ pub struct ColorImage {
 
 impl ImageLayer for ColorImage {
     fn stroke(&mut self, x: f64, y: f64, pressure: f64, pen: &Box<dyn DrawingPen>) -> BoundingBox {
-        let radius = 4;
+        let radius = pen.size().ceil() as i32;
         let mut result = BoundingBox {
             left: 0,
             top: 0,

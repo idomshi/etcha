@@ -30,6 +30,10 @@ impl DrawingPen for SimplePen {
         );
         self.plot(p1, width, height, pixels);
     }
+
+    fn size(&self) -> f64 {
+        self.size
+    }
 }
 
 impl SimplePen {
