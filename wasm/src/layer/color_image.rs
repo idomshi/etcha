@@ -1,4 +1,5 @@
 use super::{BoundingBox, ImageLayer};
+use crate::pen::DrawingPen;
 use crate::utils;
 use std::convert::TryInto;
 extern crate web_sys;
@@ -10,7 +11,7 @@ macro_rules! log {
     }
 }
 
-#[derive(Debug)]
+// #[derive(Debug)]
 pub struct ColorImage {
     pixels: Vec<u8>,
     width: i32,
@@ -21,8 +22,8 @@ pub struct ColorImage {
 }
 
 impl ImageLayer for ColorImage {
-    fn stroke(&mut self, x: f64, y: f64, pressure: f64, erase: bool) -> BoundingBox {
-        let radius = 4;
+    fn stroke(&mut self, x: f64, y: f64, pressure: f64, pen: &Box<dyn DrawingPen>) -> BoundingBox {
+        let radius = pen.size().ceil() as i32;
         let mut result = BoundingBox {
             left: 0,
             top: 0,
@@ -42,7 +43,7 @@ impl ImageLayer for ColorImage {
                     y: y,
                     pressure: pressure,
                 },
-                erase,
+                pen,
             );
             result = BoundingBox {
                 left: x.min(self.previouse_pos.x).floor() as i32 - radius,
@@ -68,8 +69,14 @@ impl ImageLayer for ColorImage {
                 y: y,
                 pressure: pressure,
             };
-            // self.plot(x.round() as i32, y.round() as i32, erase);
-            self.plot_circle(x.round() as i32, y.round() as i32, erase);
+            self.line(
+                &super::Position {
+                    x: x,
+                    y: y,
+                    pressure: pressure,
+                },
+                pen,
+            )
         }
 
         result
@@ -104,95 +111,13 @@ impl ColorImage {
     }
 
     /// p1からp2まで直線を描画する。
-    fn line(&mut self, p2: &super::Position, erase: bool) {
-        let p1 = &self.previouse_pos;
-        let x0 = p1.x.round() as i32;
-        let y0 = p1.y.round() as i32;
-        let x1 = p2.x.round() as i32;
-        let y1 = p2.y.round() as i32;
-        let dx = x1.abs_diff(x0) as i32;
-        let dy = y1.abs_diff(y0) as i32;
-        let sx = if x0 < x1 { 1 } else { -1 } as i32;
-        let sy = if y0 < y1 { 1 } else { -1 } as i32;
-        let mut err = dx as i32 - dy as i32;
-
-        let mut x = x0;
-        let mut y = y0;
-
-        loop {
-            // self.plot(x, y, erase);
-            self.plot_circle(x, y, erase);
-            if x == x1 && y == y1 {
-                break;
-            }
-            let e2 = 2 * err;
-            if e2 > -dy {
-                err -= dy;
-                x += sx;
-            }
-            if e2 < dx {
-                err += dx;
-                y += sy;
-            }
-        }
-    }
-
-    /// 点をプロットする。
-    fn plot(&mut self, x: i32, y: i32, erase: bool) {
-        if x < 0 || x > self.width || y < 0 || y > self.height {
-            return;
-        }
-        let idx = ((y * self.width as i32 + x) * 4) as usize;
-        if idx > self.pixels.len() {
-            return;
-        }
-
-        if erase {
-            self.pixels[idx] = 0;
-            self.pixels[idx + 1] = 0;
-            self.pixels[idx + 2] = 0;
-            self.pixels[idx + 3] = 0;
-        } else {
-            self.pixels[idx] = 0;
-            self.pixels[idx + 1] = 0;
-            self.pixels[idx + 2] = 0;
-            self.pixels[idx + 3] = 255;
-        }
-    }
-
-    /// 円をプロットする。
-    fn plot_circle(&mut self, x: i32, y: i32, erase: bool) {
-        let radius = 4;
-        let tr = radius * radius;
-
-        if x < 0 - radius || x > self.width + radius || y < 0 - radius || y > self.height + radius {
-            return;
-        }
-
-        let mut idx: usize;
-        for r in (y - radius).max(0)..(y + radius).min(self.height) {
-            let row = r * self.width;
-            let ty = (r - y) * (r - y);
-            for c in (x - radius).max(0)..(x + radius).min(self.width) {
-                idx = (row + c) as usize * 4;
-                if idx > self.pixels.len() {
-                    return;
-                }
-
-                if (c - x) * (c - x) + ty < tr {
-                    if erase {
-                        self.pixels[idx] = 0;
-                        self.pixels[idx + 1] = 0;
-                        self.pixels[idx + 2] = 0;
-                        self.pixels[idx + 3] = 0;
-                    } else {
-                        self.pixels[idx] = 0;
-                        self.pixels[idx + 1] = 0;
-                        self.pixels[idx + 2] = 0;
-                        self.pixels[idx + 3] = 255;
-                    }
-                }
-            }
-        }
+    fn line(&mut self, p2: &super::Position, pen: &Box<dyn DrawingPen>) {
+        pen.line(
+            &self.previouse_pos,
+            p2,
+            self.width,
+            self.height,
+            &mut self.pixels,
+        )
     }
 }
